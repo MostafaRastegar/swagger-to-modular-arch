@@ -1,0 +1,116 @@
+// Folder structure generator
+const fs = require("fs");
+const path = require("path");
+const { parseSwaggerFile } = require("../parsers/swaggerParser");
+
+/**
+ * Create directory if it doesn't exist
+ * @param {string} dir - Directory path
+ */
+function createDirIfNotExists(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+}
+
+/**
+ * Create empty file if it doesn't exist
+ * @param {string} file - File path
+ */
+function createFileIfNotExists(file) {
+  if (!fs.existsSync(file)) {
+    fs.writeFileSync(file, "", "utf8");
+    console.log(`Created file: ${file}`);
+  }
+}
+
+/**
+ * Generate folder structure based on Swagger tags
+ * @param {Object} swaggerJson - The parsed Swagger JSON object
+ * @param {string} outputDir - Base output directory
+ */
+function generateFolderStructure(swaggerJson, outputDir = "modules") {
+  // Get unique tags from the Swagger file
+  const uniqueTags = new Set();
+
+  Object.values(swaggerJson.paths).forEach((pathItem) => {
+    Object.values(pathItem).forEach((operation) => {
+      if (operation.tags && Array.isArray(operation.tags)) {
+        operation.tags.forEach((tag) => uniqueTags.add(tag));
+      }
+    });
+  });
+
+  console.log(
+    `Found ${uniqueTags.size} unique tags: ${Array.from(uniqueTags).join(", ")}`
+  );
+
+  // Create the base output directory
+  createDirIfNotExists(outputDir);
+
+  // Process each tag to create the folder structure
+  uniqueTags.forEach((tag) => {
+    console.log(`Processing tag: ${tag}`);
+
+    // Use tag name directly, only capitalize first letter for folder name
+    const originalTag = tag.toString(); // Keep the original tag name
+    const capitalizedTag = tag.charAt(0).toUpperCase() + tag.slice(1);
+
+    // Create entity folder structure
+    const entityDir = path.join(outputDir, originalTag);
+    console.log("===== start entityDir =======>");
+    console.log(entityDir);
+    console.log("<==== end   =======");
+    createDirIfNotExists(entityDir);
+
+    // Create domains directory
+    const domainsDir = path.join(entityDir, "domains");
+    createDirIfNotExists(domainsDir);
+
+    // Create models directory
+    const modelsDir = path.join(domainsDir, "models");
+    createDirIfNotExists(modelsDir);
+
+    // Create the files - use capitalized tag for model file and service interface
+    createFileIfNotExists(path.join(modelsDir, `${capitalizedTag}.ts`));
+    createFileIfNotExists(
+      path.join(domainsDir, `I${capitalizedTag}Service.ts`)
+    );
+    createFileIfNotExists(
+      path.join(entityDir, `${originalTag}.presentation.ts`)
+    );
+    createFileIfNotExists(path.join(entityDir, `${originalTag}.service.ts`));
+  });
+
+  console.log("\nFolder structure generated successfully!");
+}
+
+/**
+ * Main function to process a Swagger file and generate folder structure
+ */
+function main() {
+  const args = process.argv.slice(2);
+  const inputFile = args[0] || "swagger.json";
+  const outputDir = args[1] || "modules";
+
+  try {
+    // Read the Swagger file
+    const swagger = parseSwaggerFile(inputFile);
+
+    // Generate folder structure
+    generateFolderStructure(swagger, outputDir);
+  } catch (error) {
+    console.error("❌ Error processing Swagger file:", error.message);
+    process.exit(1);
+  }
+}
+
+// Run the script if this file is executed directly
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  generateFolderStructure,
+};

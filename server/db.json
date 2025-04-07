@@ -1,0 +1,281 @@
+{
+  "api_agents": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:dc",
+      "status": "down",
+      "ip_address": "192.168.1.31",
+      "access_port": -1757537877,
+      "extra_info": {},
+      "period": 783085653,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 63.82,
+      "total_mem": 45.29,
+      "mem_usage": 50.55,
+      "total_disk": 36.89,
+      "disk_usage": 28.79,
+      "user": 28
+    }
+  ],
+  "api_agents_all_subnets": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:2b",
+      "status": "down",
+      "ip_address": "192.168.1.223",
+      "access_port": 857297137,
+      "extra_info": {},
+      "period": 1899430065,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 15.84,
+      "total_mem": 31.92,
+      "mem_usage": 43.83,
+      "total_disk": 1.07,
+      "disk_usage": 18.78,
+      "user": 600
+    }
+  ],
+  "api_agents_health": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:b7",
+      "status": "down",
+      "ip_address": "192.168.1.152",
+      "access_port": 1939776423,
+      "extra_info": {},
+      "period": 297848137,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 28.61,
+      "total_mem": 80.18,
+      "mem_usage": 27.63,
+      "total_disk": 45.94,
+      "disk_usage": 28.04,
+      "user": 650
+    }
+  ],
+  "api_agents_agent_config": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:45",
+      "status": "down",
+      "ip_address": "192.168.1.224",
+      "access_port": 1700817540,
+      "extra_info": {},
+      "period": 263136796,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 49.5,
+      "total_mem": 99.86,
+      "mem_usage": 96.62,
+      "total_disk": 72.13,
+      "disk_usage": 24.31,
+      "user": 124
+    }
+  ],
+  "api_agents_recent_subnets": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:cc",
+      "status": "down",
+      "ip_address": "192.168.1.184",
+      "access_port": -435210715,
+      "extra_info": {},
+      "period": 149711567,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 25.64,
+      "total_mem": 67.2,
+      "mem_usage": 45.45,
+      "total_disk": 19.99,
+      "disk_usage": 13.61,
+      "user": 818
+    }
+  ],
+  "api_agents_update_agent": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "mac_address": "00:1A:2B:3C:01:b5",
+      "status": "down",
+      "ip_address": "192.168.1.18",
+      "access_port": 1784776861,
+      "extra_info": {},
+      "period": 2035312139,
+      "type": "dns",
+      "registered": false,
+      "cpu_usage": 32.3,
+      "total_mem": 78.69,
+      "mem_usage": 16.77,
+      "total_disk": 90.08,
+      "disk_usage": 61.59
+    }
+  ],
+  "api_dns_a_records": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "ttl": 2121071119,
+      "zone": 248,
+      "subnet_id": 789
+    }
+  ],
+  "api_dns_aaaa_records": [
+    {
+      "id": 1,
+      "subnet_id": 484,
+      "zone": 874,
+      "ttl": 681941018,
+      "name": "name-1"
+    }
+  ],
+  "api_dns_ptr_records": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "ttl": 1804910895,
+      "target": "target-1",
+      "zone": 868,
+      "subnet_id": 489
+    }
+  ],
+  "api_dns_query_ip": [
+    {
+      "id": 1,
+      "subnet_id": 623,
+      "ip_address": "192.168.1.78",
+      "zone_id": 672
+    }
+  ],
+  "api_dns_query_list_ips": [
+    {
+      "id": 1,
+      "zone_id": 616,
+      "value_type": "subnet",
+      "subnet_id": 867,
+      "ip_list": [
+        "192.168.1.229"
+      ]
+    }
+  ],
+  "api_dns_query_result": [
+    {
+      "id": 1,
+      "zone_id": 312,
+      "subnet_id": 906,
+      "ip_results": [
+        {
+          "domain_name": "domain_name-1",
+          "ptr_domain": "ptr_domain-1",
+          "ip_address": "192.168.1.85"
+        },
+        {
+          "domain_name": "domain_name-2",
+          "ptr_domain": "ptr_domain-2",
+          "ip_address": "192.168.2.114"
+        },
+        {
+          "domain_name": "domain_name-3",
+          "ptr_domain": "ptr_domain-3",
+          "ip_address": "192.168.3.202"
+        }
+      ]
+    }
+  ],
+  "api_dns_zones": [
+    {
+      "id": 1,
+      "name": "name-1",
+      "ip_address": "192.168.1.13",
+      "port": 153976568
+    }
+  ],
+  "api_dns_zones_csv": [
+    {
+      "id": 1,
+      "file": "file-1"
+    }
+  ],
+  "api_vlan": [
+    {
+      "id": 1,
+      "extensible_attributes": [
+        {
+          "name": "name-1",
+          "value": "value-1"
+        },
+        {
+          "name": "name-2",
+          "value": "value-2"
+        },
+        {
+          "name": "name-3",
+          "value": "value-3"
+        }
+      ],
+      "ranges": [
+        {
+          "start_range": 2357,
+          "end_range": 731
+        },
+        {
+          "start_range": 555,
+          "end_range": 1027
+        },
+        {
+          "start_range": 1624,
+          "end_range": 759
+        }
+      ],
+      "ticket_id": "ticket_id-1",
+      "service_name": "service_name-1",
+      "description": "192.168.1.233",
+      "user": 549,
+      "network_view": 723,
+      "office": 109,
+      "main_office": 787,
+      "device_type": 746,
+      "region": [
+        530,
+        859,
+        507
+      ],
+      "device_name": [
+        404,
+        123,
+        706
+      ]
+    }
+  ],
+  "api_vlan_range": [
+    {
+      "id": 1,
+      "start_range": 1822,
+      "end_range": 144,
+      "range_type": "network_view",
+      "vlan": 45,
+      "network_view": 90
+    }
+  ],
+  "api_vlan_range_bulk_create": [
+    {
+      "id": 1,
+      "range_type": "network_view",
+      "network_view": 712,
+      "vlan": 443,
+      "ranges": [
+        {
+          "start_range": 3098,
+          "end_range": 3741
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+name: API Guardian Check
+
+on:
+  pull_request:
+    paths:
+      - "swagger.json"
+      - "openapi.json"
+      - "api-spec/**"
+  workflow_dispatch:
+
+jobs:
+  check-breaking-changes:
+    runs-on: ubuntu-latest
+    name: Check for API Breaking Changes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history to get previous version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get previous API spec
+        run: |
+          # Get the base reference of the PR
+          BASE_REF=${{ github.event.pull_request.base.ref }}
+          # Use git to get the previous version of the API spec
+          git show $BASE_REF:swagger.json > old-swagger.json
+
+      - name: Run API Guardian
+        run: |
+          node api-guardian-cli.js old-swagger.json swagger.json --output=api-breaking-changes.md --ci
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-guardian-report
+          path: api-breaking-changes.md
+
+      - name: Comment on PR with breaking changes
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('api-breaking-changes.md', 'utf8');
+
+            // Truncate if too long for a GitHub comment
+            const MAX_COMMENT_LENGTH = 65000;
+            const truncatedReport = report.length > MAX_COMMENT_LENGTH 
+              ? report.substring(0, MAX_COMMENT_LENGTH) + '\n\n... [truncated] See full report in workflow artifacts'
+              : report;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ API Breaking Changes Detected ⚠️\n\n${truncatedReport}\n\nPlease review these breaking changes and ensure backward compatibility.`
+            });
