@@ -36,7 +36,7 @@ const SettingsScreen = () => {
       includeRecommendations: true,
     },
     mockServer: {
-      defaultPort: 3000,
+      defaultPort: 3004,
       enableCors: true,
       generateRandomData: true,
       dataEntryCount: 5,

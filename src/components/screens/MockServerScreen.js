@@ -42,9 +42,9 @@ const MockServerScreen = () => {
         dbPath: "server/db.json",
         routesPath: "server/routes.json",
         endpointCount: 12,
-        port: 3000,
+        port: 3004,
         command:
-          "json-server --watch server/db.json --routes server/routes.json --port 3000",
+          "npx json-server --watch server/db.json --routes server/routes.json --port 3004",
       });
     }, 1500);
   };

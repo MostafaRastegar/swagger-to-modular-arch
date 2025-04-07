@@ -34,7 +34,7 @@ async function generateMockServer(swaggerFilePath) {
     console.log("Mock server files successfully created!");
     console.log("To run the server, enter the following command:");
     console.log(
-      "json-server --watch server/db.json --routes server/routes.json --port 3000"
+      "npx json-server --watch server/db.json --routes server/routes.json --port 3004"
     );
   } catch (error) {
     console.error("Error processing swagger file:", error);
@@ -49,8 +49,8 @@ function generateReadme(swagger) {
 ## How to Use
 
 1. Install json-server: \`npm install -g json-server\`
-2. Run the server: \`json-server --watch server/db.json --routes server/routes.json --port 3000\`
-3. Access the API at \`http://localhost:3000\`
+2. Run the server: \`json-server --watch server/db.json --routes server/routes.json --port 3004\`
+3. Access the API at \`http://localhost:3004\`
 
 ## Notes
 - This mock server is for development and testing purposes only

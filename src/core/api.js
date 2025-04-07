@@ -6,6 +6,11 @@ const archiver = require("archiver");
 const fs = require("fs");
 const path = require("path");
 const { generateModules } = require("./module-generator");
+const APIGuardian = require("./gardian/api-guardian");
+const {
+  parseSwaggerFile,
+  extractUniqueTags,
+} = require("./parsers/swaggerParser");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -19,7 +24,59 @@ const upload = multer({
   dest: "uploads/",
 });
 
-// core/api.js - بخش API مرور فایل‌ها را به روز کنید
+// در بخش روت‌های express اضافه کنید
+app.post(
+  "/api/guardian/compare-specs",
+  upload.fields([
+    { name: "oldSpec", maxCount: 1 },
+    { name: "newSpec", maxCount: 1 },
+  ]),
+  (req, res) => {
+    try {
+      const oldSpecFile = req.files["oldSpec"][0].path;
+      const newSpecFile = req.files["newSpec"][0].path;
+      const reportLevel = req.body.reportLevel || "all";
+      const outputFormat = req.body.outputFormat || "json";
+
+      const guardian = new APIGuardian({ reportLevel, outputFormat });
+      const report = guardian.compareSpecs(oldSpecFile, newSpecFile);
+
+      res.json({ report });
+    } catch (error) {
+      console.error("Error in compare-specs:", error);
+      res.status(500).json({
+        error: "Failed to compare specifications",
+        details: error.message,
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/guardian/validate-spec",
+  upload.single("specFile"),
+  (req, res) => {
+    try {
+      const specFile = req.file.path;
+
+      // اعتبارسنجی فایل
+      const swagger = parseSwaggerFile(specFile);
+
+      res.json({
+        valid: true,
+        endpoints: extractUniqueTags(swagger).length,
+        message: "Specification file is valid",
+      });
+    } catch (error) {
+      console.error("Error validating spec:", error);
+      res.status(400).json({
+        valid: false,
+        error: "Invalid specification file",
+        details: error.message,
+      });
+    }
+  }
+);
 
 // API برای دریافت ساختار دایرکتوری
 app.get("/api/files/:outputPath(*)", (req, res) => {

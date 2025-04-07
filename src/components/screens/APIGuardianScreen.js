@@ -12,113 +12,72 @@ import {
   ThumbsUp,
   RefreshCw,
 } from "lucide-react";
+import {
+  compareSpecs,
+  validateSpecFile,
+} from "../../adapters/apiGuardianAdapter";
+import FileUploader from "../shared/FileUploader";
+import Button from "../shared/Button";
 
 const APIGuardianScreen = () => {
   const [oldSpec, setOldSpec] = useState(null);
   const [newSpec, setNewSpec] = useState(null);
   const [isComparing, setIsComparing] = useState(false);
   const [report, setReport] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleFileChange = (fileType, e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (fileType === "old") {
-        setOldSpec(selectedFile);
+  // این متد را اضافه می‌کنیم
+  const handleFileValidation = async (file, type) => {
+    try {
+      // اگر فایلی انتخاب نشده، خروج
+      if (!file) return null;
+
+      // اعتبارسنجی فایل
+      const validationResult = await validateSpecFile(file);
+
+      // اگر معتبر بود، فایل را ست می‌کنیم
+      if (type === "old") {
+        setOldSpec(file);
+        setError(null);
       } else {
-        setNewSpec(selectedFile);
+        setNewSpec(file);
+        setError(null);
       }
+
+      return validationResult;
+    } catch (err) {
+      // خطا را نمایش می‌دهیم
+      setError(`Invalid ${type} specification file: ${err.message}`);
+      return null;
     }
   };
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!oldSpec || !newSpec) return;
 
     setIsComparing(true);
+    setError(null);
 
-    // Simulate API call to compare specs
-    // In a real implementation, this would call the actual API Guardian logic
-    setTimeout(() => {
-      // Sample report data
-      const sampleReport = {
-        critical: [
-          {
-            type: "ENDPOINT_REMOVED",
-            path: "/api/users/details",
-            method: "GET",
-            message: "Endpoint removed: /api/users/details",
-            impact: "Clients using this endpoint will break",
-            recommendation:
-              "Consider keeping the endpoint and marking it as deprecated",
-          },
-          {
-            type: "REQUIRED_PARAM_ADDED",
-            path: "/api/orders",
-            method: "POST",
-            param: "customer_id",
-            paramIn: "body",
-            message:
-              "New required parameter 'customer_id' (body) added to POST /api/orders",
-            impact:
-              "Existing clients will not send this parameter and will break",
-            recommendation:
-              "Consider making the parameter optional with backward compatible defaults",
-          },
-        ],
-        warning: [
-          {
-            type: "OPTIONAL_PARAM_REMOVED",
-            path: "/api/products",
-            method: "GET",
-            param: "tags",
-            paramIn: "query",
-            message:
-              "Optional parameter 'tags' (query) removed from GET /api/products",
-            impact:
-              "Clients sending this parameter may break if they rely on its behavior",
-            recommendation:
-              "Consider keeping the parameter for backward compatibility",
-          },
-        ],
-        info: [
-          {
-            type: "ENDPOINT_ADDED",
-            path: "/api/products/featured",
-            message: "New endpoint added: /api/products/featured",
-          },
-        ],
-        suggestions: [
-          {
-            title: "API Versioning",
-            description:
-              "Consider implementing versioning for your API to maintain backward compatibility.",
-            options: [
-              "URL path versioning (e.g., /v1/resource, /v2/resource)",
-              "Query parameter versioning (e.g., /resource?version=1)",
-            ],
-          },
-          {
-            title: "Deprecation Strategy",
-            description:
-              "Before removing endpoints or changing behavior, use deprecation notices to inform API consumers.",
-            options: [
-              'Add "Deprecated" header to responses',
-              "Keep deprecated endpoints for at least one release cycle",
-            ],
-          },
-        ],
-      };
+    try {
+      const report = await compareSpecs(oldSpec, newSpec, {
+        reportLevel: "all",
+        outputFormat: "json",
+      });
 
-      setReport(sampleReport);
+      setReport(report);
       setIsComparing(false);
-    }, 2000);
+    } catch (err) {
+      setError(err.message);
+      setIsComparing(false);
+    }
   };
 
   const resetComparison = () => {
     setOldSpec(null);
     setNewSpec(null);
     setReport(null);
+    setError(null);
   };
-
   return (
     <div className="space-y-6">
       {/* File Upload Section */}
@@ -132,102 +91,55 @@ const APIGuardianScreen = () => {
             changes.
           </p>
 
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              <strong className="font-bold">Error: </strong>
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Old API Spec Upload */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div>
               <h4 className="font-medium mb-3">Old API Specification</h4>
-              {oldSpec ? (
-                <div>
-                  <Check size={36} className="mx-auto text-green-500 mb-2" />
-                  <p className="text-gray-800 font-medium">{oldSpec.name}</p>
-                  <p className="text-gray-500 text-sm">
-                    {(oldSpec.size / 1024).toFixed(1)} KB
-                  </p>
-                  <button
-                    className="mt-3 text-blue-600 hover:text-blue-800"
-                    onClick={() => setOldSpec(null)}
-                  >
-                    Change file
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <Upload size={36} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 mb-2">
-                    Select your old API specification
-                  </p>
-                  <label className="cursor-pointer bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 inline-block text-sm">
-                    Browse Files
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".json,.yaml,.yml"
-                      onChange={(e) => handleFileChange("old", e)}
-                    />
-                  </label>
-                </div>
-              )}
+              <FileUploader
+                onFileSelect={(file) => handleFileValidation(file, "old")}
+                acceptedTypes=".json,.yaml,.yml"
+                file={oldSpec}
+              />
             </div>
 
             {/* New API Spec Upload */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div>
               <h4 className="font-medium mb-3">New API Specification</h4>
-              {newSpec ? (
-                <div>
-                  <Check size={36} className="mx-auto text-green-500 mb-2" />
-                  <p className="text-gray-800 font-medium">{newSpec.name}</p>
-                  <p className="text-gray-500 text-sm">
-                    {(newSpec.size / 1024).toFixed(1)} KB
-                  </p>
-                  <button
-                    className="mt-3 text-blue-600 hover:text-blue-800"
-                    onClick={() => setNewSpec(null)}
-                  >
-                    Change file
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <Upload size={36} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 mb-2">
-                    Select your new API specification
-                  </p>
-                  <label className="cursor-pointer bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 inline-block text-sm">
-                    Browse Files
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".json,.yaml,.yml"
-                      onChange={(e) => handleFileChange("new", e)}
-                    />
-                  </label>
-                </div>
-              )}
+              <FileUploader
+                onFileSelect={(file) => handleFileValidation(file, "new")}
+                acceptedTypes=".json,.yaml,.yml"
+                file={newSpec}
+              />
             </div>
           </div>
 
           <div className="mt-6 flex justify-center">
-            <button
+            <Button
               onClick={handleCompare}
               disabled={!oldSpec || !newSpec || isComparing}
-              className={`flex items-center px-6 py-3 rounded-lg ${
-                !oldSpec || !newSpec || isComparing
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
+              variant={
+                !oldSpec || !newSpec || isComparing ? "secondary" : "primary"
+              }
+              size="large"
+              icon={
+                isComparing ? (
+                  <RefreshCw className="animate-spin" size={20} />
+                ) : (
+                  <AlertTriangle size={20} />
+                )
+              }
             >
-              {isComparing ? (
-                <>
-                  <RefreshCw size={20} className="mr-2 animate-spin" />
-                  Analyzing API Changes...
-                </>
-              ) : (
-                <>
-                  <AlertTriangle size={20} className="mr-2" />
-                  Detect Breaking Changes
-                </>
-              )}
-            </button>
+              {isComparing
+                ? "Analyzing API Changes..."
+                : "Detect Breaking Changes"}
+            </Button>
           </div>
         </div>
       )}
