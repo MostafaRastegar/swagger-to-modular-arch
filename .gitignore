@@ -3,5 +3,5 @@ swagger-orginal.json
 flattened-swagger.json
 modules
 server
-
+uploads
 !src/core/server
