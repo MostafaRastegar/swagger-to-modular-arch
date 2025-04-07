@@ -1,0 +1,5273 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "IPAM API",
+    "version": "0.1.0",
+    "description": "IPAM Rest APIs"
+  },
+  "paths": {
+    "/api/agents/": {
+      "get": {
+        "operationId": "agents_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedGetAgentList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "agents_create",
+        "tags": ["agents"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/agents/{agent_id}/": {
+      "get": {
+        "operationId": "agents_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this agent.",
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "agents_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this agent.",
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "agents_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this agent.",
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/agents/{agent_id}/all-subnets/": {
+      "get": {
+        "operationId": "agents_all_subnets_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this agent.",
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/agents/{agent_id}/health/": {
+      "get": {
+        "operationId": "agents_health_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this agent.",
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/agents/agent-config/": {
+      "get": {
+        "operationId": "agents_agent_config_retrieve",
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/agents/recent-subnets/": {
+      "get": {
+        "operationId": "agents_recent_subnets_retrieve",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_scan_time",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true
+          }
+        ],
+        "tags": ["agents"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/agents/update_agent/": {
+      "put": {
+        "operationId": "agents_update_agent_update",
+        "tags": ["agents"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentSerializerForAgentRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentSerializerForAgentRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentSerializerForAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentSerializerForAgent"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/a-records/": {
+      "get": {
+        "operationId": "dns_a_records_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          },
+          {
+            "in": "query",
+            "name": "zone",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedARecordList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "dns_a_records_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/a-records/{id}/": {
+      "get": {
+        "operationId": "dns_a_records_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this a record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "dns_a_records_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this a record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ARecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "dns_a_records_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this a record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/dns/aaaa-records/": {
+      "get": {
+        "operationId": "dns_aaaa_records_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          },
+          {
+            "in": "query",
+            "name": "zone",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAAAARecordList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "dns_aaaa_records_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AAAARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/aaaa-records/{id}/": {
+      "get": {
+        "operationId": "dns_aaaa_records_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this aaaa record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AAAARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "dns_aaaa_records_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this aaaa record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AAAARecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AAAARecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "dns_aaaa_records_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this aaaa record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/dns/ptr-records/": {
+      "get": {
+        "operationId": "dns_ptr_records_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          },
+          {
+            "in": "query",
+            "name": "zone",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPTRRecordList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "dns_ptr_records_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PTRRecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/ptr-records/{id}/": {
+      "get": {
+        "operationId": "dns_ptr_records_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this ptr record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PTRRecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "dns_ptr_records_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this ptr record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PTRRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PTRRecord"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "dns_ptr_records_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this ptr record.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/dns/query-ip/": {
+      "post": {
+        "operationId": "dns_query_ip_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuerySingleIpRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/QuerySingleIpRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/QuerySingleIpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuerySingleIp"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/query-list-ips/": {
+      "post": {
+        "operationId": "dns_query_list_ips_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryMultipleIPRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryMultipleIPRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryMultipleIPRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryMultipleIP"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/query-result/": {
+      "post": {
+        "operationId": "dns_query_result_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Result"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/zones/": {
+      "get": {
+        "operationId": "dns_zones_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "in": "query",
+            "name": "ip_address",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "port",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedZoneList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "dns_zones_create",
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/dns/zones/{id}/": {
+      "get": {
+        "operationId": "dns_zones_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this zone.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "dns_zones_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this zone.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "dns_zones_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this zone.",
+            "required": true
+          }
+        ],
+        "tags": ["dns"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/dns/zones/csv/": {
+      "post": {
+        "operationId": "dns_zones_csv_create",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "skip-error",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "tags": ["dns"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvSerailizerRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvSerailizerRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvSerailizerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsvSerailizer"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/vlan/": {
+      "get": {
+        "operationId": "vlan_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "device_name",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "device_type",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "main_office",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "network_view",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "office",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          },
+          {
+            "in": "query",
+            "name": "region",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "explode": true,
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedVlanListList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "vlan_create",
+        "tags": ["vlan"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanCreateRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanCreateRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VlanCreate"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/vlan/{id}/": {
+      "get": {
+        "operationId": "vlan_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this vlan.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "vlan_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this vlan.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanUpdateRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanUpdateRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/VlanUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VlanUpdate"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "vlan_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this vlan.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/vlan/export/": {
+      "get": {
+        "operationId": "vlan_export_retrieve",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/vlan/range/": {
+      "get": {
+        "operationId": "vlan_range_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "advance_filter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "advance_filter"
+          },
+          {
+            "in": "query",
+            "name": "network_view",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "A page number within the paginated result set.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to return per page.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search"
+          },
+          {
+            "in": "query",
+            "name": "range_type",
+            "schema": {
+              "type": "string",
+              "enum": ["network_view", "vlan"]
+            },
+            "description": "* `vlan` - VLAN\n* `network_view` - NetworkView"
+          },
+          {
+            "in": "query",
+            "name": "vlan",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRangeList"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "vlan_range_create",
+        "tags": ["vlan"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/vlan/range/{id}/": {
+      "get": {
+        "operationId": "vlan_range_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this range.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "vlan_range_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this range.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "vlan_range_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "A unique integer value identifying this range.",
+            "required": true
+          }
+        ],
+        "tags": ["vlan"],
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/vlan/range/bulk-create/": {
+      "post": {
+        "operationId": "vlan_range_bulk_create_create",
+        "tags": ["vlan"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeBulkCreateRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeBulkCreateRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeBulkCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RangeBulkCreate"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AAAARecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "name",
+          "subnet_id",
+          "type",
+          "updated_at",
+          "zone"
+        ]
+      },
+      "AAAARecordRequest": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": ["address", "name", "subnet_id", "zone"]
+      },
+      "ARecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "type": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "name",
+          "subnet_id",
+          "type",
+          "updated_at",
+          "zone"
+        ]
+      },
+      "ARecordRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1
+          },
+          "subnet_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["address", "name", "subnet_id", "zone"]
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": ["address"]
+      },
+      "AddressRequest": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["address"]
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "mac_address": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status9acEnum"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "access_port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "extra_info": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type5a3Enum"
+          },
+          "registered": {
+            "type": "boolean"
+          },
+          "cpu_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_mem": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mem_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_disk": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "disk_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "ip_address",
+          "mac_address",
+          "name",
+          "updated_at",
+          "user"
+        ]
+      },
+      "AgentRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "mac_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status9acEnum"
+          },
+          "ip_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "access_port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "extra_info": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type5a3Enum"
+          },
+          "registered": {
+            "type": "boolean"
+          },
+          "cpu_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_mem": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mem_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_disk": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "disk_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          }
+        },
+        "required": ["ip_address", "mac_address", "name", "user"]
+      },
+      "AgentSerializerForAgent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "mac_address": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status9acEnum"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "access_port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "extra_info": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "nullable": true
+          },
+          "static_token": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type5a3Enum"
+          },
+          "registered": {
+            "type": "boolean"
+          },
+          "cpu_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_mem": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mem_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_disk": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "disk_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "ip_address",
+          "mac_address",
+          "name",
+          "static_token",
+          "updated_at",
+          "user"
+        ]
+      },
+      "AgentSerializerForAgentRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "mac_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status9acEnum"
+          },
+          "ip_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "access_port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "extra_info": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type5a3Enum"
+          },
+          "registered": {
+            "type": "boolean"
+          },
+          "cpu_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_mem": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mem_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_disk": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "disk_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "required": ["ip_address", "mac_address", "name"]
+      },
+      "AllPossibleNetworkEnum": {
+        "enum": [0, 1],
+        "type": "integer",
+        "description": "* `0` - 0\n* `1` - 1"
+      },
+      "AllocationTypeName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "AttributeValue": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "value"]
+      },
+      "AttributeValueRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "value"]
+      },
+      "BackupFileAddress": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string"
+          }
+        },
+        "required": ["file_name"]
+      },
+      "BackupFileAddressRequest": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["file_name"]
+      },
+      "BlankEnum": {
+        "enum": [""]
+      },
+      "Config": {
+        "type": "object",
+        "properties": {
+          "keep_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "new_time": {
+            "type": "string",
+            "format": "time"
+          }
+        }
+      },
+      "ConfigRequest": {
+        "type": "object",
+        "properties": {
+          "keep_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "new_time": {
+            "type": "string",
+            "format": "time"
+          }
+        }
+      },
+      "CsvSerailizer": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": ["file"]
+      },
+      "CsvSerailizerRequest": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": ["file"]
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/DeviceTypeEnum"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusD7aEnum"
+          },
+          "mac_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "os": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "ipaddress": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "ipaddress",
+          "name",
+          "status",
+          "type",
+          "updated_at"
+        ]
+      },
+      "DeviceRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/DeviceTypeEnum"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusD7aEnum"
+          },
+          "mac_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "os": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "ipaddress": {
+            "type": "integer"
+          }
+        },
+        "required": ["ipaddress", "name", "status", "type"]
+      },
+      "DeviceTypeEnum": {
+        "enum": ["router", "switch", "hub", "firewall", "PC"],
+        "type": "string",
+        "description": "* `router` - Router\n* `switch` - Switch\n* `hub` - Hub\n* `firewall` - Firewall\n* `PC` - PC"
+      },
+      "DeviceTypeName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "Filter": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "operator": {
+            "$ref": "#/components/schemas/OperatorEnum"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": ["field", "operator", "value"]
+      },
+      "FilterRequest": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "operator": {
+            "$ref": "#/components/schemas/OperatorEnum"
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": ["field", "operator", "value"]
+      },
+      "GetAgent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserName"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "mac_address": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status9acEnum"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "access_port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "extra_info": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "period": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type5a3Enum"
+          },
+          "registered": {
+            "type": "boolean"
+          },
+          "cpu_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_mem": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mem_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_disk": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "disk_usage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "ip_address",
+          "mac_address",
+          "name",
+          "updated_at",
+          "user"
+        ]
+      },
+      "LevelEnum": {
+        "enum": ["ERROR", "WARNING", "INFO"],
+        "type": "string",
+        "description": "* `ERROR` - Error\n* `WARNING` - Warn\n* `INFO` - Info"
+      },
+      "LevelTwoStatusEnum": {
+        "enum": ["unmanaged", "reserved", "conflict"],
+        "type": "string",
+        "description": "* `unmanaged` - Unmanaged\n* `reserved` - Reserved\n* `conflict` - Conflict"
+      },
+      "MainOfficeName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "NetworkDeviceName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "NetworkViewName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "level": {
+            "$ref": "#/components/schemas/LevelEnum"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "attachment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "notifications_state__is_read": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "message",
+          "notifications_state__is_read",
+          "updated_at"
+        ]
+      },
+      "NotificationDescription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": ["id"]
+      },
+      "NotificationDescriptionRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "NullEnum": {
+        "enum": [null]
+      },
+      "OfficeName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "OperatorEnum": {
+        "enum": [
+          "Equals",
+          "Case-insensitive Equals",
+          "Contains",
+          "Case-insensitive Contains",
+          "Greater than",
+          "Greater than or equal to",
+          "Less than",
+          "Less than or equal to",
+          "Starts with",
+          "Case-insensitive Starts with",
+          "Ends with",
+          "Case-insensitive Ends with"
+        ],
+        "type": "string",
+        "description": "* `Equals` - Equals\n* `Case-insensitive Equals` - Case Insensitive Equals\n* `Contains` - Contains\n* `Case-insensitive Contains` - Case Insensitive Contains\n* `Greater than` - Greater Than\n* `Greater than or equal to` - Greater Than Or Equal To\n* `Less than` - Less Than\n* `Less than or equal to` - Less Than Or Equal To\n* `Starts with` - Starts With\n* `Case-insensitive Starts with` - Case Insensitive Starts With\n* `Ends with` - Ends With\n* `Case-insensitive Ends with` - Case Insensitive Ends With"
+      },
+      "PTRRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "type": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "name",
+          "subnet_id",
+          "target",
+          "type",
+          "updated_at",
+          "zone"
+        ]
+      },
+      "PTRRecordRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "ttl": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "zone": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1
+          },
+          "subnet_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["address", "name", "subnet_id", "target", "zone"]
+      },
+      "PaginatedAAAARecordList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AAAARecord"
+            }
+          }
+        }
+      },
+      "PaginatedARecordList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ARecord"
+            }
+          }
+        }
+      },
+      "PaginatedDeviceList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          }
+        }
+      },
+      "PaginatedDiscoveryListList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryList"
+            }
+          }
+        }
+      },
+      "PaginatedExtensibleAttributeListList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtensibleAttributeList"
+            }
+          }
+        }
+      },
+      "PaginatedGetAgentList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAgent"
+            }
+          }
+        }
+      },
+      "PaginatedIPAddressUpdateList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IPAddressUpdate"
+            }
+          }
+        }
+      },
+      "PaginatedIpAllocationRetrieveList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IpAllocationRetrieve"
+            }
+          }
+        }
+      },
+      "PaginatedIpTicketList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IpTicket"
+            }
+          }
+        }
+      },
+      "PaginatedNotificationList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            }
+          }
+        }
+      },
+      "PaginatedPTRRecordList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PTRRecord"
+            }
+          }
+        }
+      },
+      "PaginatedRangeList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Range"
+            }
+          }
+        }
+      },
+      "PaginatedSmartFolderListList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFolderList"
+            }
+          }
+        }
+      },
+      "PaginatedSubnetList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subnet"
+            }
+          }
+        }
+      },
+      "PaginatedVMServerList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VMServer"
+            }
+          }
+        }
+      },
+      "PaginatedVirtualMachineList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualMachine"
+            }
+          }
+        }
+      },
+      "PaginatedVlanListList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VlanList"
+            }
+          }
+        }
+      },
+      "PaginatedVlanTicketListList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VlanTicketList"
+            }
+          }
+        }
+      },
+      "PaginatedVmInterfaceList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VmInterface"
+            }
+          }
+        }
+      },
+      "PaginatedZoneList": {
+        "type": "object",
+        "required": ["count", "results"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=4"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?page=2"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Zone"
+            }
+          }
+        }
+      },
+      "PatchedExtensibleAttributeRequest": {
+        "type": "object",
+        "properties": {
+          "supported_models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportedModelsEnum"
+            }
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "type": {
+            "$ref": "#/components/schemas/TypeD49Enum"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PatchedIPAddressRequest": {
+        "type": "object",
+        "properties": {
+          "discover_data": {
+            "$ref": "#/components/schemas/DiscoverDataRequest"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/IPAddressStatusEnum"
+          },
+          "level_two_status": {
+            "$ref": "#/components/schemas/LevelTwoStatusEnum"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "mac_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TypeBe4Enum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "os": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "create_scan_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "update_scan_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version": {
+            "$ref": "#/components/schemas/VersionBb2Enum"
+          },
+          "alert_sent": {
+            "type": "boolean"
+          },
+          "physical_host_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "device_type": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "subnet": {
+            "type": "integer"
+          },
+          "device_name": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "PatchedVMServerRequest": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "vim_type": {
+            "$ref": "#/components/schemas/VimTypeEnum"
+          }
+        }
+      },
+      "Prefix": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string"
+          }
+        },
+        "required": ["prefix"]
+      },
+      "PrefixRequest": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["prefix"]
+      },
+      "QueryMultipleIP": {
+        "type": "object",
+        "properties": {
+          "zone_id": {
+            "type": "integer"
+          },
+          "value_type": {
+            "$ref": "#/components/schemas/ValueTypeEnum"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_list": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["subnet_id", "value_type", "zone_id"]
+      },
+      "QueryMultipleIPRequest": {
+        "type": "object",
+        "properties": {
+          "zone_id": {
+            "type": "integer"
+          },
+          "value_type": {
+            "$ref": "#/components/schemas/ValueTypeEnum"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_list": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": ["subnet_id", "value_type", "zone_id"]
+      },
+      "QuerySingleIp": {
+        "type": "object",
+        "properties": {
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "zone_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["ip_address", "subnet_id", "zone_id"]
+      },
+      "QuerySingleIpRequest": {
+        "type": "object",
+        "properties": {
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "zone_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["ip_address", "subnet_id", "zone_id"]
+      },
+      "Range": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "start_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "end_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "range_type": {
+            "$ref": "#/components/schemas/RangeTypeEnum"
+          },
+          "vlan": {
+            "type": "integer",
+            "nullable": true
+          },
+          "network_view": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "created_at",
+          "end_range",
+          "id",
+          "range_type",
+          "start_range",
+          "updated_at"
+        ]
+      },
+      "RangeBulkCreate": {
+        "type": "object",
+        "properties": {
+          "range_type": {
+            "$ref": "#/components/schemas/RangeTypeEnum"
+          },
+          "network_view": {
+            "type": "integer",
+            "nullable": true
+          },
+          "vlan": {
+            "type": "integer",
+            "nullable": true
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlan"
+            }
+          }
+        },
+        "required": ["range_type", "ranges"]
+      },
+      "RangeBulkCreateRequest": {
+        "type": "object",
+        "properties": {
+          "range_type": {
+            "$ref": "#/components/schemas/RangeTypeEnum"
+          },
+          "network_view": {
+            "type": "integer",
+            "nullable": true
+          },
+          "vlan": {
+            "type": "integer",
+            "nullable": true
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlanRequest"
+            }
+          }
+        },
+        "required": ["range_type", "ranges"]
+      },
+      "RangeRequest": {
+        "type": "object",
+        "properties": {
+          "start_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "end_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "range_type": {
+            "$ref": "#/components/schemas/RangeTypeEnum"
+          },
+          "vlan": {
+            "type": "integer",
+            "nullable": true
+          },
+          "network_view": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": ["end_range", "range_type", "start_range"]
+      },
+      "RangeTypeEnum": {
+        "enum": ["vlan", "network_view"],
+        "type": "string",
+        "description": "* `vlan` - VLAN\n* `network_view` - NetworkView"
+      },
+      "RangeVlan": {
+        "type": "object",
+        "properties": {
+          "start_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "end_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          }
+        },
+        "required": ["end_range", "start_range"]
+      },
+      "RangeVlanRequest": {
+        "type": "object",
+        "properties": {
+          "start_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          },
+          "end_range": {
+            "type": "integer",
+            "maximum": 4096,
+            "minimum": 0
+          }
+        },
+        "required": ["end_range", "start_range"]
+      },
+      "RegionName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "zone_id": {
+            "type": "integer"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SingleResult"
+            }
+          }
+        },
+        "required": ["ip_results", "subnet_id", "zone_id"]
+      },
+      "ResultRequest": {
+        "type": "object",
+        "properties": {
+          "zone_id": {
+            "type": "integer"
+          },
+          "subnet_id": {
+            "type": "integer"
+          },
+          "ip_results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SingleResultRequest"
+            }
+          }
+        },
+        "required": ["ip_results", "subnet_id", "zone_id"]
+      },
+      "ScanStatusEnum": {
+        "enum": ["scanning", "finished", "queued", "canceled"],
+        "type": "string",
+        "description": "* `scanning` - scanning\n* `finished` - finished\n* `queued` - queued\n* `canceled` - canceled"
+      },
+      "ScannedSubnetItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "discovery_protocol": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryProtocolEnum"
+            },
+            "nullable": true
+          },
+          "scan_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scan_end_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ScannedSubnetItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "discovery_protocol": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryProtocolEnum"
+            },
+            "nullable": true
+          },
+          "scan_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scan_end_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SingleIPUpdate": {
+        "type": "object",
+        "properties": {
+          "mac_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "os": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "physical_host_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValue"
+            },
+            "maxItems": 10
+          }
+        }
+      },
+      "SingleIPUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "mac_address": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "os": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "physical_host_name": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValueRequest"
+            },
+            "maxItems": 10
+          }
+        }
+      },
+      "SingleResult": {
+        "type": "object",
+        "properties": {
+          "domain_name": {
+            "type": "string"
+          },
+          "ptr_domain": {
+            "type": "string"
+          },
+          "ip_address": {
+            "type": "string"
+          }
+        },
+        "required": ["domain_name", "ip_address", "ptr_domain"]
+      },
+      "SingleResultRequest": {
+        "type": "object",
+        "properties": {
+          "domain_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ptr_domain": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ip_address": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["domain_name", "ip_address", "ptr_domain"]
+      },
+      "Status6d2Enum": {
+        "enum": ["review", "allocated", "refused"],
+        "type": "string",
+        "description": "* `review` - review\n* `allocated` - allocated\n* `refused` - refused"
+      },
+      "Status9acEnum": {
+        "enum": ["up", "down"],
+        "type": "string",
+        "description": "* `up` - UP\n* `down` - DOWN"
+      },
+      "StatusD7aEnum": {
+        "enum": ["used", "unmanaged", "unused", "reserved", "conflict"],
+        "type": "string",
+        "description": "* `used` - used\n* `unmanaged` - unmanaged\n* `unused` - unused\n* `reserved` - reserved\n* `conflict` - conflict"
+      },
+      "SupportedModelsEnum": {
+        "enum": ["SubNet", "NetworkView", "IPAddressModel", "Vlan"],
+        "type": "string",
+        "description": "* `SubNet` - SubNet\n* `NetworkView` - NetworkView\n* `IPAddressModel` - IPAddressModel\n* `Vlan` - Vlan"
+      },
+      "Type505Enum": {
+        "enum": ["subnet", "container"],
+        "type": "string",
+        "description": "* `subnet` - Subnet\n* `container` - Container"
+      },
+      "Type5a3Enum": {
+        "enum": ["subnet", "dns", "vm"],
+        "type": "string",
+        "description": "* `subnet` - SUBNET\n* `dns` - DNS\n* `vm` - VM"
+      },
+      "TypeBe4Enum": {
+        "enum": ["public", "private"],
+        "type": "string",
+        "description": "* `public` - public\n* `private` - private"
+      },
+      "TypeD49Enum": {
+        "enum": ["URL", "Integer", "String", "Email", "List"],
+        "type": "string",
+        "description": "* `URL` - URL\n* `Integer` - Integer\n* `String` - String\n* `Email` - Email\n* `List` - List"
+      },
+      "UserName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "username": {
+            "type": "string",
+            "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+            "pattern": "^[\\w.@+-]+$",
+            "maxLength": 150
+          }
+        },
+        "required": ["id", "username"]
+      },
+      "VMServer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "host": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "username": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "vim_type": {
+            "$ref": "#/components/schemas/VimTypeEnum"
+          }
+        },
+        "required": [
+          "created_at",
+          "host",
+          "id",
+          "password",
+          "updated_at",
+          "username"
+        ]
+      },
+      "VMServerRequest": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "vim_type": {
+            "$ref": "#/components/schemas/VimTypeEnum"
+          }
+        },
+        "required": ["host", "password", "username"]
+      },
+      "ValueTypeEnum": {
+        "enum": ["ip", "subnet"],
+        "type": "string",
+        "description": "* `ip` - ip\n* `subnet` - subnet"
+      },
+      "Version259Enum": {
+        "enum": ["4", "6"],
+        "type": "string",
+        "description": "* `4` - Version Four\n* `6` - Version Six"
+      },
+      "VersionBb2Enum": {
+        "enum": ["6", "4"],
+        "type": "string",
+        "description": "* `6` - IPV6\n* `4` - IPV4"
+      },
+      "VimTypeEnum": {
+        "enum": ["vmware", "openstack"],
+        "type": "string",
+        "description": "* `vmware` - Vmware\n* `openstack` - Openstack"
+      },
+      "VirtualMachine": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "vm_key": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "os": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "discovered_in": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "discovered_in",
+          "id",
+          "os",
+          "updated_at",
+          "vm_key"
+        ]
+      },
+      "Vlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "extensible_attributes": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlan"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ticket_id": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "network_view": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "main_office": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "integer",
+            "nullable": true
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "created_at",
+          "device_name",
+          "extensible_attributes",
+          "id",
+          "main_office",
+          "network_view",
+          "office",
+          "ranges",
+          "region",
+          "updated_at",
+          "user"
+        ]
+      },
+      "VlanCreate": {
+        "type": "object",
+        "properties": {
+          "main_office": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "vlan_infos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VlanSingleInfoReq"
+            }
+          }
+        },
+        "required": ["main_office", "office", "vlan_infos"]
+      },
+      "VlanCreateRequest": {
+        "type": "object",
+        "properties": {
+          "main_office": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "vlan_infos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VlanSingleInfoReqRequest"
+            }
+          }
+        },
+        "required": ["main_office", "office", "vlan_infos"]
+      },
+      "VlanList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "network_view": {
+            "$ref": "#/components/schemas/NetworkViewName"
+          },
+          "office": {
+            "$ref": "#/components/schemas/OfficeName"
+          },
+          "main_office": {
+            "$ref": "#/components/schemas/MainOfficeName"
+          },
+          "device_type": {
+            "$ref": "#/components/schemas/DeviceTypeName"
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegionName"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkDeviceName"
+            }
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlan"
+            }
+          },
+          "extensible_attributes": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "device_name",
+          "device_type",
+          "extensible_attributes",
+          "id",
+          "main_office",
+          "network_view",
+          "office",
+          "ranges",
+          "region"
+        ]
+      },
+      "VlanSingleInfoReq": {
+        "type": "object",
+        "properties": {
+          "network_view": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "integer",
+            "nullable": true
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlan"
+            }
+          },
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValue"
+            },
+            "maxItems": 10
+          }
+        },
+        "required": ["device_name", "network_view", "ranges", "region"]
+      },
+      "VlanSingleInfoReqRequest": {
+        "type": "object",
+        "properties": {
+          "network_view": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "integer",
+            "nullable": true
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlanRequest"
+            }
+          },
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValueRequest"
+            },
+            "maxItems": 10
+          }
+        },
+        "required": ["device_name", "network_view", "ranges", "region"]
+      },
+      "VlanTicketCreate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ticket_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "process_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "num_of_req_vlan": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "request_time": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "allocated_time": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status6d2Enum"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "network_view": {
+            "type": "integer"
+          },
+          "main_office": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "allocated_time",
+          "created_at",
+          "device_name",
+          "id",
+          "main_office",
+          "network_view",
+          "num_of_req_vlan",
+          "office",
+          "process_id",
+          "region",
+          "request_time",
+          "ticket_id",
+          "updated_at",
+          "user"
+        ]
+      },
+      "VlanTicketCreateRequest": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "process_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "num_of_req_vlan": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status6d2Enum"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "network_view": {
+            "type": "integer"
+          },
+          "main_office": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "device_name",
+          "main_office",
+          "network_view",
+          "num_of_req_vlan",
+          "office",
+          "process_id",
+          "region",
+          "ticket_id",
+          "user"
+        ]
+      },
+      "VlanTicketList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "network_view": {
+            "$ref": "#/components/schemas/NetworkViewName"
+          },
+          "office": {
+            "$ref": "#/components/schemas/OfficeName"
+          },
+          "main_office": {
+            "$ref": "#/components/schemas/MainOfficeName"
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegionName"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkDeviceName"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status6d2Enum"
+          },
+          "request_time": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "allocated_time": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ticket_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "num_of_req_vlan": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserName"
+          }
+        },
+        "required": [
+          "allocated_time",
+          "device_name",
+          "id",
+          "main_office",
+          "network_view",
+          "num_of_req_vlan",
+          "office",
+          "region",
+          "request_time",
+          "ticket_id",
+          "user"
+        ]
+      },
+      "VlanTicketReviewRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status6d2Enum"
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlanRequest"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["ranges"]
+      },
+      "VlanUpdate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValue"
+            },
+            "maxItems": 10
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlan"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ticket_id": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "network_view": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "main_office": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "integer",
+            "nullable": true
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "created_at",
+          "device_name",
+          "id",
+          "main_office",
+          "network_view",
+          "office",
+          "ranges",
+          "region",
+          "updated_at",
+          "user"
+        ]
+      },
+      "VlanUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "extensible_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValueRequest"
+            },
+            "maxItems": 10
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeVlanRequest"
+            }
+          },
+          "ticket_id": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "service_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "network_view": {
+            "type": "integer"
+          },
+          "office": {
+            "type": "integer"
+          },
+          "main_office": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "integer",
+            "nullable": true
+          },
+          "region": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "device_name": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "device_name",
+          "main_office",
+          "network_view",
+          "office",
+          "ranges",
+          "region",
+          "user"
+        ]
+      },
+      "VmInterface": {
+        "type": "object",
+        "properties": {
+          "virtual_machine": {
+            "type": "string"
+          },
+          "mac_address": {
+            "type": "string"
+          },
+          "ip_address": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "mac_address",
+          "updated_at",
+          "virtual_machine"
+        ]
+      },
+      "Zone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "ip_address": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "ip_address",
+          "name",
+          "port",
+          "updated_at"
+        ]
+      },
+      "ZoneRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "ip_address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "port": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0
+          }
+        },
+        "required": ["ip_address", "name", "port"]
+      }
+    },
+    "securitySchemes": {
+      "jwtAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
