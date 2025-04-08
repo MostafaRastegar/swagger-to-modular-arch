@@ -5,3 +5,4 @@ modules
 server
 uploads
 !src/core/server
+workspaces
