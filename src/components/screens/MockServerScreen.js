@@ -14,8 +14,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { generateMockServer } from "../../adapters/mockServerAdapter";
+import { useSettings } from "../../context/SettingsContext";
 
 const MockServerScreen = () => {
+  const { settings } = useSettings();
   const [file, setFile] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -68,19 +70,33 @@ const MockServerScreen = () => {
     setError(null);
 
     try {
-      // Call the real API
-      const result = await generateMockServer(file);
+      // Apply settings to mock server options
+      const mockServerOptions = {
+        port: settings.mockServer.defaultPort,
+        enableCors: settings.mockServer.enableCors,
+        generateRandomData: settings.mockServer.generateRandomData,
+        dataEntryCount: settings.mockServer.dataEntryCount,
+      };
+
+      // Call the real API with settings
+      const result = await generateMockServer(file, mockServerOptions);
 
       if (result.success === false) {
         throw new Error(result.message || "Failed to generate mock server");
       }
 
+      // Update the command to use the configured port
+      const command = result.command.replace(
+        /--port \d+/,
+        `--port ${settings.mockServer.defaultPort}`
+      );
+
       setMockServer({
         dbPath: result.dbPath,
         routesPath: result.routesPath,
         endpointCount: result.endpointCount,
-        port: result.port,
-        command: result.command,
+        port: settings.mockServer.defaultPort,
+        command: command,
       });
 
       if (result.endpoints && result.endpoints.length > 0) {

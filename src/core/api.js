@@ -253,6 +253,7 @@ app.post(
   (req, res) => {
     try {
       console.log("Generating mock server from file:", req.file);
+      console.log("Mock server options:", req.body);
 
       if (!req.file) {
         return res.status(400).json({
@@ -260,6 +261,12 @@ app.post(
           message: "No swagger file uploaded",
         });
       }
+
+      // Get mock server settings from request
+      const port = parseInt(req.body.port) || 3004;
+      const enableCors = req.body.enableCors === "true";
+      const generateRandomData = req.body.generateRandomData === "true";
+      const dataEntryCount = parseInt(req.body.dataEntryCount) || 5;
 
       // Generate the mock server
       generateMockServer(req.file.path);
@@ -296,15 +303,22 @@ app.post(
         });
       }
 
+      // Build the command with the specified port and CORS option
+      let command = `npx json-server --watch server/db.json --routes server/routes.json --port ${port}`;
+
+      // Add CORS if enabled
+      if (enableCors) {
+        command += " --middlewares cors";
+      }
+
       res.json({
         success: true,
         message: "Mock server generated successfully",
         dbPath: "server/db.json",
         routesPath: "server/routes.json",
         endpointCount,
-        port: 3004,
-        command:
-          "npx json-server --watch server/db.json --routes server/routes.json --port 3004",
+        port,
+        command,
         endpoints: sampleEndpoints,
       });
     } catch (error) {
@@ -316,7 +330,6 @@ app.post(
     }
   }
 );
-
 // API for checking if mock server is running
 app.get("/api/mock-server/status", (req, res) => {
   try {

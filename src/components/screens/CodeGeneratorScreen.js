@@ -19,21 +19,22 @@ import FileUploader from "../shared/FileUploader";
 import Button from "../shared/Button";
 import FileExplorer from "../shared/FileExplorer";
 import FileViewer from "../shared/FileViewer";
+import { useSettings } from "../../context/SettingsContext";
 
 const CodeGeneratorScreen = () => {
   const [file, setFile] = useState(null);
-  const [options, setOptions] = useState({
-    outputDir: "src/generated",
-    createFolders: false,
-    folderStructure: "modules",
-  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationComplete, setGenerationComplete] = useState(false);
   const [generationResult, setGenerationResult] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState(null);
   const [apiStatus, setApiStatus] = useState(null);
-
+  const { settings } = useSettings();
+  const [options, setOptions] = useState({
+    outputDir: settings.general.defaultOutputDir || "src/generated",
+    createFolders: false,
+    folderStructure: "modules",
+  });
   // آزمودن اتصال API در هنگام بارگذاری کامپوننت
   useEffect(() => {
     const checkApiStatus = async () => {
@@ -71,6 +72,19 @@ const CodeGeneratorScreen = () => {
 
   const handleGenerate = async () => {
     if (!file) return;
+
+    // Check if confirmation is required
+    if (settings.general.confirmBeforeGeneration) {
+      const confirmed = window.confirm(
+        `Are you sure you want to generate code with these options?\n\nOutput directory: ${
+          options.outputDir
+        }\nCreate folders: ${
+          options.createFolders ? "Yes" : "No"
+        }\nFolder structure: ${options.folderStructure}`
+      );
+
+      if (!confirmed) return;
+    }
 
     setIsGenerating(true);
     setError(null);

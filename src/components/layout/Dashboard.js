@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Home, Code, Shield, Server, Settings } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -7,9 +7,17 @@ import CodeGeneratorScreen from "../screens/CodeGeneratorScreen";
 import APIGuardianScreen from "../screens/APIGuardianScreen";
 import MockServerScreen from "../screens/MockServerScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import { useSettings } from "../../context/SettingsContext";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
+  const { settings } = useSettings();
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  // Effect to check if we should show welcome screen
+  useEffect(() => {
+    setShowWelcome(settings.general.showWelcomeScreen);
+  }, [settings.general.showWelcomeScreen]);
 
   // Menu items configuration
   const menuItems = [
@@ -44,6 +52,8 @@ const Dashboard = () => {
         menuItems={menuItems}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        compact={settings.appearance.compactSidebar}
+        showLabels={settings.appearance.showToolbarLabels}
       />
       <div className="flex-1 overflow-auto">
         <Header
@@ -51,8 +61,14 @@ const Dashboard = () => {
             menuItems.find((item) => item.id === activeTab)?.label ||
             "Dashboard"
           }
+          showLabels={settings.appearance.showToolbarLabels}
         />
-        <main className="p-6">{renderContent()}</main>
+        <main className="p-6">
+          {/* Only show HomeScreen on initial load if showWelcomeScreen is true */}
+          {activeTab === "home" && !showWelcome
+            ? renderContent("generator")
+            : renderContent()}
+        </main>
       </div>
     </div>
   );

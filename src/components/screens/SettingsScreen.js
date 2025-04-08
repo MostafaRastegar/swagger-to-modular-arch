@@ -13,42 +13,11 @@ import {
   Lock,
   Paintbrush,
 } from "lucide-react";
+import { useSettings } from "../../context/SettingsContext";
 
 const SettingsScreen = () => {
   const [activeTab, setActiveTab] = useState("general");
-  const [settings, setSettings] = useState({
-    general: {
-      defaultOutputDir: "src/modules",
-      showWelcomeScreen: true,
-      autoSaveSettings: true,
-      confirmBeforeGeneration: true,
-    },
-    appearance: {
-      theme: "light",
-      accentColor: "blue",
-      showToolbarLabels: true,
-      compactSidebar: false,
-    },
-    guardian: {
-      defaultReportFormat: "markdown",
-      defaultReportLevel: "all",
-      autoExportReport: false,
-      includeRecommendations: true,
-    },
-    mockServer: {
-      defaultPort: 3004,
-      enableCors: true,
-      generateRandomData: true,
-      dataEntryCount: 5,
-    },
-    codeGenerator: {
-      includeComments: true,
-      tabSize: 2,
-      quoteStyle: "single",
-      prettierConfig: true,
-      createIndexFiles: true,
-    },
-  });
+  const { settings, updateSetting, resetSettings } = useSettings();
 
   const tabs = [
     { id: "general", label: "General", icon: <Sliders size={18} /> },
@@ -59,17 +28,11 @@ const SettingsScreen = () => {
   ];
 
   const handleChange = (section, setting, value) => {
-    setSettings({
-      ...settings,
-      [section]: {
-        ...settings[section],
-        [setting]: value,
-      },
-    });
+    updateSetting(section, setting, value);
   };
 
   const handleSaveSettings = () => {
-    // In a real app, this would save to localStorage or a backend
+    // Settings are automatically saved to localStorage, so we just show a confirmation
     alert("Settings saved successfully!");
   };
 
@@ -79,7 +42,7 @@ const SettingsScreen = () => {
         "Are you sure you want to reset all settings to default values?"
       )
     ) {
-      // Reset logic would go here
+      resetSettings();
       alert("Settings have been reset to defaults.");
     }
   };

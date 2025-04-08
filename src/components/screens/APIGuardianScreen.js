@@ -18,8 +18,10 @@ import {
 } from "../../adapters/apiGuardianAdapter";
 import FileUploader from "../shared/FileUploader";
 import Button from "../shared/Button";
+import { useSettings } from "../../context/SettingsContext";
 
 const APIGuardianScreen = () => {
+  const { settings } = useSettings();
   const [oldSpec, setOldSpec] = useState(null);
   const [newSpec, setNewSpec] = useState(null);
   const [isComparing, setIsComparing] = useState(false);
@@ -60,11 +62,21 @@ const APIGuardianScreen = () => {
 
     try {
       const report = await compareSpecs(oldSpec, newSpec, {
-        reportLevel: "all",
-        outputFormat: "json",
+        reportLevel: settings.guardian.defaultReportLevel,
+        outputFormat: settings.guardian.defaultReportFormat,
       });
 
       setReport(report);
+
+      // Auto export report if enabled
+      if (settings.guardian.autoExportReport) {
+        // This would typically download the report file
+        // Since we can't directly trigger a download, we'll show a message
+        alert(
+          "Report auto-export feature is enabled. In a production environment, this would automatically download the report."
+        );
+      }
+
       setIsComparing(false);
     } catch (err) {
       setError(err.message);
