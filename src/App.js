@@ -1,11 +1,15 @@
+// src/App.js
 import React from "react";
 import Dashboard from "./components/layout/Dashboard";
 import { SettingsProvider } from "./context/SettingsContext";
+import { WorkspaceProvider } from "./context/WorkspaceContext";
 
 function App() {
   return (
     <SettingsProvider>
-      <Dashboard />
+      <WorkspaceProvider>
+        <Dashboard />
+      </WorkspaceProvider>
     </SettingsProvider>
   );
 }

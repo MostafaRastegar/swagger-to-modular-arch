@@ -1,14 +1,25 @@
-// dashboard/src/adapters/mockServerAdapter.js
+// src/adapters/mockServerAdapter.js
+
 export const generateMockServer = async (file, options = {}) => {
   try {
+    // Validate workspace ID is present
+    if (!options.workspaceId) {
+      throw new Error("Workspace ID is required for mock server generation");
+    }
+
     // Create a FormData instance to send the file
     const formData = new FormData();
     formData.append("swaggerFile", file);
 
-    // Add any additional options
+    // Add options to formData
     Object.keys(options).forEach((key) => {
       formData.append(key, options[key]);
     });
+
+    console.log(
+      "Sending mock server request with workspace:",
+      options.workspaceId
+    );
 
     // Make the API request
     const response = await fetch(
@@ -24,18 +35,29 @@ export const generateMockServer = async (file, options = {}) => {
       throw new Error(errorData.message || `Server error: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // Ensure workspace ID is included in the result
+    if (result.success && !result.workspaceId) {
+      result.workspaceId = options.workspaceId;
+    }
+
+    return result;
   } catch (error) {
     console.error("Error generating mock server:", error);
     throw error;
   }
 };
 
-export const checkMockServerStatus = async () => {
+export const checkMockServerStatus = async (workspaceId = null) => {
   try {
-    const response = await fetch(
-      "http://localhost:3001/api/mock-server/status"
-    );
+    // Build URL with optional workspace ID
+    let url = "http://localhost:3001/api/mock-server/status";
+    if (workspaceId) {
+      url += `?workspaceId=${workspaceId}`;
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Failed to check server status: ${response.statusText}`);

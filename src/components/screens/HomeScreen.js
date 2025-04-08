@@ -1,5 +1,16 @@
-import React from 'react';
-import { Code, Shield, Server, Upload, ArrowRight } from 'lucide-react';
+// src/components/screens/HomeScreen.js
+
+import React from "react";
+import {
+  Code,
+  Shield,
+  Server,
+  Upload,
+  ArrowRight,
+  Briefcase,
+} from "lucide-react";
+import { useWorkspace } from "../../context/WorkspaceContext";
+import WorkspaceIndicator from "../workspace/WorkspaceIndicator";
 
 const FeatureCard = ({ title, description, icon, buttonText, onClick }) => (
   <div className="bg-white rounded-lg shadow-md p-6 transition-all hover:shadow-lg">
@@ -20,27 +31,40 @@ const FeatureCard = ({ title, description, icon, buttonText, onClick }) => (
 );
 
 const HomeScreen = ({ onNavigate }) => {
+  const { currentWorkspace } = useWorkspace();
+
   const features = [
     {
-      id: 'generator',
-      title: 'Code Generator',
-      description: 'Generate TypeScript interfaces, services, and React components from Swagger/OpenAPI specifications.',
+      id: "workspace",
+      title: "Workspaces",
+      description:
+        "Manage your workspaces for organized and isolated project environments.",
+      icon: <Briefcase size={24} />,
+      buttonText: "Manage Workspaces",
+    },
+    {
+      id: "generator",
+      title: "Code Generator",
+      description:
+        "Generate TypeScript interfaces, services, and React components from Swagger/OpenAPI specifications.",
       icon: <Code size={24} />,
-      buttonText: 'Generate Code',
+      buttonText: "Generate Code",
     },
     {
-      id: 'guardian',
-      title: 'API Guardian',
-      description: 'Detect breaking changes between different versions of your API specifications.',
+      id: "guardian",
+      title: "API Guardian",
+      description:
+        "Detect breaking changes between different versions of your API specifications.",
       icon: <Shield size={24} />,
-      buttonText: 'Check API Changes',
+      buttonText: "Check API Changes",
     },
     {
-      id: 'mockServer',
-      title: 'Mock Server',
-      description: 'Create a fully functional mock server from your API specification for development and testing.',
+      id: "mockServer",
+      title: "Mock Server",
+      description:
+        "Create a fully functional mock server from your API specification for development and testing.",
       icon: <Server size={24} />,
-      buttonText: 'Create Mock Server',
+      buttonText: "Create Mock Server",
     },
   ];
 
@@ -49,10 +73,14 @@ const HomeScreen = ({ onNavigate }) => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Welcome to API Toolkit</h2>
         <p className="text-gray-600 mb-4">
-          This toolkit provides comprehensive solutions for API development, testing, and maintenance.
-          Choose a tool below to get started, or upload a Swagger/OpenAPI specification.
+          This toolkit provides comprehensive solutions for API development,
+          testing, and maintenance. Choose a tool below to get started, or
+          upload a Swagger/OpenAPI specification.
         </p>
-        
+
+        {/* Workspace Status */}
+        <WorkspaceIndicator />
+
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 flex items-center">
           <Upload className="text-blue-600 mr-3" size={20} />
           <span className="mr-3">Upload a Swagger/OpenAPI file:</span>
@@ -63,7 +91,7 @@ const HomeScreen = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {features.map((feature) => (
           <FeatureCard
             key={feature.id}

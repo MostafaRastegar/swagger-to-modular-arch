@@ -20,8 +20,11 @@ import Button from "../shared/Button";
 import FileExplorer from "../shared/FileExplorer";
 import FileViewer from "../shared/FileViewer";
 import { useSettings } from "../../context/SettingsContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
+import WorkspaceIndicator from "../workspace/WorkspaceIndicator";
 
 const CodeGeneratorScreen = () => {
+  const { currentWorkspace } = useWorkspace();
   const [file, setFile] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationComplete, setGenerationComplete] = useState(false);
@@ -34,25 +37,8 @@ const CodeGeneratorScreen = () => {
     outputDir: settings.general.defaultOutputDir || "src/generated",
     createFolders: false,
     folderStructure: "modules",
+    workspaceId: currentWorkspace?.id || null, // Initialize with current workspace ID
   });
-  // آزمودن اتصال API در هنگام بارگذاری کامپوننت
-  useEffect(() => {
-    const checkApiStatus = async () => {
-      try {
-        const status = await testApiConnection();
-        setApiStatus(status);
-        console.log("API status:", status);
-      } catch (error) {
-        console.error("Failed to connect to API:", error);
-        setApiStatus({
-          status: "error",
-          message: "Could not connect to API server",
-        });
-      }
-    };
-
-    checkApiStatus();
-  }, []);
 
   const handleFileChange = (selectedFile) => {
     setFile(selectedFile);
@@ -73,25 +59,24 @@ const CodeGeneratorScreen = () => {
   const handleGenerate = async () => {
     if (!file) return;
 
-    // Check if confirmation is required
-    if (settings.general.confirmBeforeGeneration) {
-      const confirmed = window.confirm(
-        `Are you sure you want to generate code with these options?\n\nOutput directory: ${
-          options.outputDir
-        }\nCreate folders: ${
-          options.createFolders ? "Yes" : "No"
-        }\nFolder structure: ${options.folderStructure}`
-      );
-
-      if (!confirmed) return;
+    // Check if we have a workspace
+    if (!currentWorkspace) {
+      setError("Please select or create a workspace before generating code");
+      return;
     }
+
+    // Ensure workspaceId is included in options
+    const generateOptions = {
+      ...options,
+      workspaceId: currentWorkspace.id,
+    };
 
     setIsGenerating(true);
     setError(null);
 
     try {
-      console.log("Generating code with options:", options);
-      const result = await generateCode(file, options);
+      console.log("Generating code with options:", generateOptions);
+      const result = await generateCode(file, generateOptions);
 
       console.log("Generation result:", result);
       setGenerationResult(result);
@@ -104,9 +89,37 @@ const CodeGeneratorScreen = () => {
     }
   };
 
+  useEffect(() => {
+    if (currentWorkspace) {
+      setOptions((prevOptions) => ({
+        ...prevOptions,
+        workspaceId: currentWorkspace.id,
+      }));
+    }
+  }, [currentWorkspace]);
+
+  useEffect(() => {
+    const checkApiStatus = async () => {
+      try {
+        const status = await testApiConnection();
+        setApiStatus(status);
+        console.log("API status:", status);
+      } catch (error) {
+        console.error("Failed to connect to API:", error);
+        setApiStatus({
+          status: "error",
+          message: "Could not connect to API server",
+        });
+      }
+    };
+
+    checkApiStatus();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* API Status Indicator */}
+      <WorkspaceIndicator />
       {apiStatus && apiStatus.status !== "ok" && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <strong className="font-bold">API Error: </strong>

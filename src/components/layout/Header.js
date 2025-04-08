@@ -1,6 +1,8 @@
+// src/components/layout/Header.js
 import React from "react";
 import { Moon, Sun, Settings } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext";
+import WorkspaceSelector from "../workspace/WorkspaceSelector";
 
 const Header = ({ title }) => {
   const { settings, updateSetting } = useSettings();
@@ -13,7 +15,12 @@ const Header = ({ title }) => {
   return (
     <header className="bg-white shadow-sm">
       <div className="px-6 py-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-700">{title}</h2>
+        <div className="flex items-center">
+          <h2 className="text-xl font-semibold text-gray-700 mr-4">{title}</h2>
+          <div className="ml-4 w-64">
+            <WorkspaceSelector />
+          </div>
+        </div>
 
         <div className="flex items-center space-x-4">
           <button

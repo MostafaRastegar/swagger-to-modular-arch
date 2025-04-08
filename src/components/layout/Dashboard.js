@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Home, Code, Shield, Server, Settings } from "lucide-react";
+import { Home, Code, Shield, Server, Settings, Briefcase } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import HomeScreen from "../screens/HomeScreen";
@@ -7,6 +7,8 @@ import CodeGeneratorScreen from "../screens/CodeGeneratorScreen";
 import APIGuardianScreen from "../screens/APIGuardianScreen";
 import MockServerScreen from "../screens/MockServerScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import WorkspaceScreen from "../screens/WorkspaceScreen";
+
 import { useSettings } from "../../context/SettingsContext";
 
 const Dashboard = () => {
@@ -26,6 +28,7 @@ const Dashboard = () => {
     { id: "guardian", label: "API Guardian", icon: <Shield size={20} /> },
     { id: "mockServer", label: "Mock Server", icon: <Server size={20} /> },
     { id: "settings", label: "Settings", icon: <Settings size={20} /> },
+    { id: "workspace", label: "Workspaces", icon: <Briefcase size={20} /> },
   ];
 
   // Function to render the active content based on selected tab
@@ -40,7 +43,9 @@ const Dashboard = () => {
       case "mockServer":
         return <MockServerScreen />;
       case "settings":
-        return <SettingsScreen />;
+        return <SettingsScreen onTabChange={setActiveTab} />;
+      case "workspace":
+        return <WorkspaceScreen />;
       default:
         return <HomeScreen onNavigate={setActiveTab} />;
     }

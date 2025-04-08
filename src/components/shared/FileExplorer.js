@@ -1,4 +1,4 @@
-// dashboard/src/components/shared/FileExplorer.js
+// src/components/shared/FileExplorer.js
 import React, { useState, useEffect } from "react";
 import {
   Folder,
@@ -9,6 +9,7 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
+import { useWorkspace } from "../../context/WorkspaceContext";
 
 const FileExplorer = ({ outputPath, onFileSelect }) => {
   const [fileTree, setFileTree] = useState(null);
@@ -16,14 +17,21 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
   const [error, setError] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState({});
   const [folderContents, setFolderContents] = useState({});
+  const { currentWorkspace } = useWorkspace();
 
-  // دریافت اطلاعات مسیر اصلی
+  // Fetch the root directory
   const fetchRootDirectory = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://localhost:3001/api/files/${outputPath}`
-      );
+
+      // Construct URL with workspace ID if available
+      let url = `http://localhost:3001/api/files/${outputPath}`;
+      if (currentWorkspace) {
+        url += `?workspaceId=${currentWorkspace.id}`;
+      }
+
+      console.log("Fetching directory:", url);
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -39,12 +47,17 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     }
   };
 
-  // دریافت محتوای یک پوشه خاص
+  // Update fetchFolderContents to include workspace ID
   const fetchFolderContents = async (folderPath) => {
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/files/${folderPath}`
-      );
+      // Construct URL with workspace ID if available
+      let url = `http://localhost:3001/api/files/${folderPath}`;
+      if (currentWorkspace) {
+        url += `?workspaceId=${currentWorkspace.id}`;
+      }
+
+      console.log("Fetching folder contents:", url);
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(
@@ -54,7 +67,7 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
 
       const data = await response.json();
 
-      // ذخیره محتوای پوشه در state
+      // Store folder contents in state
       setFolderContents((prev) => ({
         ...prev,
         [folderPath]: data.items || [],
@@ -68,33 +81,40 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     }
   };
 
+  // Update useEffect to depend on currentWorkspace
   useEffect(() => {
     if (outputPath) {
       fetchRootDirectory();
     }
-  }, [outputPath]);
+  }, [outputPath, currentWorkspace]); // Re-fetch when workspace changes
 
   const handleToggleFolder = async (folderPath) => {
-    // بررسی وضعیت جاری باز/بسته بودن پوشه
+    // Check if folder is currently expanded
     const isCurrentlyExpanded = expandedFolders[folderPath];
 
-    // به روزرسانی وضعیت باز/بسته بودن
+    // Update expanded state
     setExpandedFolders((prev) => ({
       ...prev,
       [folderPath]: !isCurrentlyExpanded,
     }));
 
-    // اگر پوشه در حال باز شدن است و محتوای آن را هنوز نداریم، آن را دریافت کنیم
+    // If folder is being expanded and we don't have its contents yet, fetch them
     if (!isCurrentlyExpanded && !folderContents[folderPath]) {
       await fetchFolderContents(folderPath);
     }
   };
 
+  // Update handleFileClick to include workspace ID
   const handleFileClick = async (item) => {
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/files/${item.path}`
-      );
+      // Construct URL with workspace ID if available
+      let url = `http://localhost:3001/api/files/${item.path}`;
+      if (currentWorkspace) {
+        url += `?workspaceId=${currentWorkspace.id}`;
+      }
+
+      console.log("Fetching file:", url);
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
@@ -200,12 +220,23 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     return <div className="text-gray-500 p-4">No files to display</div>;
   }
 
+  // Update download URL to include workspace ID
+  const getDownloadUrl = () => {
+    let url = `http://localhost:3001/api/download/${outputPath}`;
+
+    if (currentWorkspace) {
+      url += `?workspaceId=${currentWorkspace.id}`;
+    }
+
+    return url;
+  };
+
   return (
     <div className="border rounded-md overflow-hidden bg-white">
       <div className="bg-gray-100 px-4 py-2 flex justify-between items-center border-b">
         <h4 className="font-medium">Files</h4>
         <a
-          href={`http://localhost:3001/api/download/${outputPath}`}
+          href={getDownloadUrl()}
           className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
           download
         >

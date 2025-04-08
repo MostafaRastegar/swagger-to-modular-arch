@@ -19,6 +19,8 @@ import {
 import FileUploader from "../shared/FileUploader";
 import Button from "../shared/Button";
 import { useSettings } from "../../context/SettingsContext";
+import WorkspaceIndicator from "../workspace/WorkspaceIndicator";
+import { useWorkspace } from "../../context/WorkspaceContext";
 
 const APIGuardianScreen = () => {
   const { settings } = useSettings();
@@ -27,17 +29,18 @@ const APIGuardianScreen = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
+  const { currentWorkspace } = useWorkspace();
 
-  // این متد را اضافه می‌کنیم
+  // Update file validation function to handle workspace
   const handleFileValidation = async (file, type) => {
     try {
-      // اگر فایلی انتخاب نشده، خروج
+      // If no file selected, return null
       if (!file) return null;
 
-      // اعتبارسنجی فایل
+      // Validate file
       const validationResult = await validateSpecFile(file);
 
-      // اگر معتبر بود، فایل را ست می‌کنیم
+      // If valid, set the file
       if (type === "old") {
         setOldSpec(file);
         setError(null);
@@ -48,23 +51,35 @@ const APIGuardianScreen = () => {
 
       return validationResult;
     } catch (err) {
-      // خطا را نمایش می‌دهیم
+      // Show error
       setError(`Invalid ${type} specification file: ${err.message}`);
       return null;
     }
   };
 
+  // Update compare function to include workspace ID
   const handleCompare = async () => {
     if (!oldSpec || !newSpec) return;
+
+    // Check if we have a workspace
+    if (!currentWorkspace) {
+      setError("Please select or create a workspace before comparing specs");
+      return;
+    }
 
     setIsComparing(true);
     setError(null);
 
     try {
-      const report = await compareSpecs(oldSpec, newSpec, {
+      // Include workspaceId in options
+      const compareOptions = {
         reportLevel: settings.guardian.defaultReportLevel,
         outputFormat: settings.guardian.defaultReportFormat,
-      });
+        workspaceId: currentWorkspace.id,
+      };
+
+      console.log("Comparing specs with options:", compareOptions);
+      const report = await compareSpecs(oldSpec, newSpec, compareOptions);
 
       setReport(report);
 
@@ -93,6 +108,8 @@ const APIGuardianScreen = () => {
   return (
     <div className="space-y-6">
       {/* File Upload Section */}
+      <WorkspaceIndicator />
+
       {!report && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-medium mb-4">

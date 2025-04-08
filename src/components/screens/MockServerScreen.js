@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { generateMockServer } from "../../adapters/mockServerAdapter";
 import { useSettings } from "../../context/SettingsContext";
+import WorkspaceIndicator from "../workspace/WorkspaceIndicator";
+import { useWorkspace } from "../../context/WorkspaceContext";
 
 const MockServerScreen = () => {
   const { settings } = useSettings();
@@ -26,6 +28,7 @@ const MockServerScreen = () => {
   const [error, setError] = useState(null);
   const [endpoints, setEndpoints] = useState([]);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const { currentWorkspace } = useWorkspace();
 
   // Check if mock server is running when component mounts or
   // when mockServer state changes
@@ -65,7 +68,12 @@ const MockServerScreen = () => {
 
   const handleGenerate = async () => {
     if (!file) return;
-
+    if (!currentWorkspace) {
+      setError(
+        "Please select or create a workspace before generating mock server"
+      );
+      return;
+    }
     setIsGenerating(true);
     setError(null);
 
@@ -76,6 +84,7 @@ const MockServerScreen = () => {
         enableCors: settings.mockServer.enableCors,
         generateRandomData: settings.mockServer.generateRandomData,
         dataEntryCount: settings.mockServer.dataEntryCount,
+        workspaceId: currentWorkspace.id,
       };
 
       // Call the real API with settings
@@ -90,13 +99,13 @@ const MockServerScreen = () => {
         /--port \d+/,
         `--port ${settings.mockServer.defaultPort}`
       );
-
       setMockServer({
         dbPath: result.dbPath,
         routesPath: result.routesPath,
         endpointCount: result.endpointCount,
         port: settings.mockServer.defaultPort,
         command: command,
+        workspaceId: result.workspaceId || currentWorkspace.id,
       });
 
       if (result.endpoints && result.endpoints.length > 0) {
@@ -211,6 +220,8 @@ const MockServerScreen = () => {
   return (
     <div className="space-y-6">
       {/* File Upload Section */}
+      <WorkspaceIndicator />
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
           <Server size={20} className="mr-2 text-blue-600" />

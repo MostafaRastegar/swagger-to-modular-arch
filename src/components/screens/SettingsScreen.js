@@ -12,14 +12,19 @@ import {
   Trash2,
   Lock,
   Paintbrush,
+  Briefcase,
 } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
+import Button from "../shared/Button";
 
-const SettingsScreen = () => {
+const SettingsScreen = ({ onTabChange }) => {
   const [activeTab, setActiveTab] = useState("general");
   const { settings, updateSetting, resetSettings } = useSettings();
+  const { currentWorkspace, workspaces } = useWorkspace();
 
   const tabs = [
+    { id: "workspace", label: "Workspace", icon: <Briefcase size={18} /> },
     { id: "general", label: "General", icon: <Sliders size={18} /> },
     { id: "appearance", label: "Appearance", icon: <Paintbrush size={18} /> },
     { id: "guardian", label: "API Guardian", icon: <Shield size={18} /> },
@@ -461,6 +466,81 @@ const SettingsScreen = () => {
     </div>
   );
 
+  // Add this function to render workspace settings
+  const renderWorkspaceSettings = () => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-medium">Workspace Settings</h3>
+
+      {currentWorkspace ? (
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <h4 className="font-medium text-blue-800">Current Workspace</h4>
+            <p className="text-blue-800 text-lg font-semibold mt-1">
+              {currentWorkspace.name}
+            </p>
+            <p className="text-blue-700 text-sm mt-1">
+              ID: {currentWorkspace.id}
+            </p>
+            <p className="text-blue-700 text-sm">
+              Created: {new Date(currentWorkspace.created).toLocaleString()}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-medium mb-2">Default Generation Path</h4>
+            <p className="text-gray-600 text-sm mb-2">
+              This is the default path where files will be generated within your
+              workspace.
+            </p>
+            <input
+              type="text"
+              value={settings.workspace?.defaultPath || ""}
+              onChange={(e) =>
+                handleChange("workspace", "defaultPath", e.target.value)
+              }
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., generated"
+            />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="autoSwitchWorkspace"
+              checked={settings.workspace?.autoSwitchWorkspace}
+              onChange={(e) =>
+                handleChange(
+                  "workspace",
+                  "autoSwitchWorkspace",
+                  e.target.checked
+                )
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="autoSwitchWorkspace" className="ml-2 text-gray-700">
+              Automatically switch to last used workspace
+            </label>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-6 text-center">
+          <Briefcase size={32} className="mx-auto text-gray-400 mb-3" />
+          <p className="text-gray-700 mb-2">No workspace selected</p>
+          <p className="text-gray-600 text-sm mb-4">
+            Select or create a workspace to manage its settings
+          </p>
+          <Button
+            variant="primary"
+            size="small"
+            onClick={() => onTabChange("workspace")}
+          >
+            Manage Workspaces
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case "general":
@@ -473,6 +553,9 @@ const SettingsScreen = () => {
         return renderMockServerSettings();
       case "codeGenerator":
         return renderCodeGeneratorSettings();
+      case "workspace":
+        return renderWorkspaceSettings();
+
       default:
         return renderGeneralSettings();
     }
