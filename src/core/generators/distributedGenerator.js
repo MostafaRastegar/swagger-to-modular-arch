@@ -23,6 +23,9 @@ function generateDistributedFiles(
   outputDir
 ) {
   console.log(`Generating distributed files for ${tag}...`);
+  console.log(
+    `Generating ==========generateDistributedFiles=============== ${outputDir}...`
+  );
 
   try {
     // Generate all sections

@@ -24,7 +24,7 @@ function validateAndEnsureDirectories(swaggerFilePath, outputDir) {
  */
 function writeToFile(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
-  console.log(`Generated file: ${filePath}`);
+  console.log(`===========================Generated file: ${filePath}`);
 }
 
 module.exports = {

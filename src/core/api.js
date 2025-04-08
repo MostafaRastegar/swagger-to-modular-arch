@@ -33,10 +33,24 @@ cron.schedule("0 0 * * *", () => {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Get workspace ID from request
-    const workspaceId = req.query.workspaceId || req.body.workspaceId;
+    const workspaceId = req.query.workspaceId;
 
     if (!workspaceId) {
-      return cb(new Error("Workspace ID is required"));
+      // If not in query params, use a temporary directory
+      console.warn(
+        "Warning: No workspace ID provided in query for file upload"
+      );
+
+      // You have two options here:
+      // 1. Create a temporary directory
+      const tempUploadPath = path.join(process.cwd(), "uploads", "temp");
+      if (!fs.existsSync(tempUploadPath)) {
+        fs.mkdirSync(tempUploadPath, { recursive: true });
+      }
+      return cb(null, tempUploadPath);
+
+      // 2. Or return an error if workspace is strictly required
+      // return cb(new Error("Workspace ID is required in query parameters"));
     }
 
     const uploadPath = getWorkspaceUploadPath(workspaceId);
@@ -66,7 +80,7 @@ app.post(
   (req, res) => {
     try {
       // Check for workspace ID
-      const workspaceId = req.body.workspaceId;
+      const workspaceId = req.query.workspaceId;
       if (!workspaceId) {
         return res.status(400).json({
           success: false,
@@ -126,7 +140,7 @@ app.post(
   (req, res) => {
     try {
       // Check for workspace ID
-      const workspaceId = req.body.workspaceId;
+      const workspaceId = req.query.workspaceId;
       if (!workspaceId) {
         return res.status(400).json({
           success: false,
@@ -418,13 +432,14 @@ app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
   try {
     console.log("Received file:", req.file);
     console.log("Received options:", req.body);
+    console.log("Query params:", req.query);
 
     // Get and validate workspace ID
-    const workspaceId = req.body.workspaceId;
+    const workspaceId = req.query.workspaceId;
     if (!workspaceId) {
       return res.status(400).json({
         success: false,
-        message: "Workspace ID is required",
+        message: "Workspace ID is required in URL query parameters",
       });
     }
 
@@ -577,7 +592,7 @@ app.post(
       console.log("Mock server options:", req.body);
 
       // Get and validate workspace ID
-      const workspaceId = req.body.workspaceId;
+      const workspaceId = req.query.workspaceId;
       if (!workspaceId) {
         return res.status(400).json({
           success: false,
@@ -708,9 +723,9 @@ app.post(
           let command = `npx json-server --watch ${relativeDbPath} --routes ${relativeRoutesPath} --port ${port}`;
 
           // Add CORS if enabled
-          if (enableCors) {
-            command += " --middlewares cors";
-          }
+          // if (enableCors) {
+          //   command += " --middlewares cors";
+          // }
 
           res.json({
             success: true,
@@ -1117,3 +1132,44 @@ app.listen(port, () => {
   console.log(`API server running on port ${port}`);
   console.log(`Test API status: http://localhost:${port}/api/status`);
 });
+
+// Add this helper function to src/core/api.js
+/**
+ * Creates a workspace-aware multer middleware
+ * @param {string} fieldName - The field name for the file upload
+ * @returns {Function} Multer middleware configured for workspace uploads
+ */
+function createWorkspaceUploadMiddleware(fieldName) {
+  const workspaceStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      // Get workspace ID from URL query
+      const workspaceId = req.query.workspaceId;
+
+      if (!workspaceId) {
+        return cb(
+          new Error(`Workspace ID is required in query for ${fieldName} upload`)
+        );
+      }
+
+      // Validate workspace exists
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return cb(new Error(`Workspace not found: ${workspaceId}`));
+      }
+
+      const uploadPath = getWorkspaceUploadPath(workspaceId);
+
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + "-" + file.originalname);
+    },
+  });
+
+  return multer({ storage: workspaceStorage }).single(fieldName);
+}

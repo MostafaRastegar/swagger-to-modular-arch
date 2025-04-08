@@ -1,5 +1,4 @@
-// src/adapters/apiGuardianAdapter.js
-
+// Updated src/adapters/apiGuardianAdapter.js
 export const compareSpecs = async (oldSpecFile, newSpecFile, options) => {
   try {
     // Validate workspace ID is present
@@ -12,20 +11,18 @@ export const compareSpecs = async (oldSpecFile, newSpecFile, options) => {
     formData.append("newSpec", newSpecFile);
     formData.append("reportLevel", options.reportLevel || "all");
     formData.append("outputFormat", options.outputFormat || "json");
-    formData.append("workspaceId", options.workspaceId);
+    // Don't include workspaceId in form data
 
-    console.log(
-      "Sending Guardian compare request with workspace:",
-      options.workspaceId
-    );
+    // Include workspaceId in URL query parameter
+    const url = `http://localhost:3001/api/guardian/compare-specs?workspaceId=${options.workspaceId}`;
 
-    const response = await fetch(
-      "http://localhost:3001/api/guardian/compare-specs",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    console.log("Sending Guardian compare request to:", url);
+    console.log("With workspace ID:", options.workspaceId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -57,7 +54,7 @@ export const validateSpecFile = async (file, workspaceId = null) => {
     }
 
     const response = await fetch(
-      "http://localhost:3001/api/guardian/validate-spec",
+      `http://localhost:3001/api/guardian/validate-spec?workspaceId=${workspaceId}`,
       {
         method: "POST",
         body: formData,

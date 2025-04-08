@@ -38,7 +38,10 @@ const APIGuardianScreen = () => {
       if (!file) return null;
 
       // Validate file
-      const validationResult = await validateSpecFile(file);
+      const validationResult = await validateSpecFile(
+        file,
+        currentWorkspace.id
+      );
 
       // If valid, set the file
       if (type === "old") {

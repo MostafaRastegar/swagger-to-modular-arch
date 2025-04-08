@@ -25,7 +25,7 @@ const {
  */
 function processTag(tag, swagger, outputDir, allSchemas, options = {}) {
   console.log(`Processing tag: ${tag}...`);
-
+  console.log(`Generating ==========processTag=============== ${outputDir}...`);
   try {
     // Collect operations
     const operations = collectTagOperations(tag, swagger);
@@ -38,13 +38,7 @@ function processTag(tag, swagger, outputDir, allSchemas, options = {}) {
     // Check if we should use distributed files
     if (options.createFolders) {
       // Generate distributed files
-      generateDistributedFiles(
-        tag,
-        operations,
-        swagger,
-        allSchemas,
-        options.folderStructure || "modules"
-      );
+      generateDistributedFiles(tag, operations, swagger, allSchemas, outputDir);
     } else {
       // Generate unified file
       const fileContent = generateFileContent(

@@ -1,5 +1,4 @@
-// src/adapters/codeGeneratorAdapter.js
-
+// Updated src/adapters/codeGeneratorAdapter.js
 export const generateCode = async (file, options) => {
   if (!file) {
     throw new Error("No file provided");
@@ -16,19 +15,22 @@ export const generateCode = async (file, options) => {
     const formData = new FormData();
     formData.append("swaggerFile", file);
 
-    // Add options to formData
+    // Add options to formData EXCEPT workspaceId (we'll put that in URL)
     Object.keys(options).forEach((key) => {
-      formData.append(key, options[key]);
+      if (key !== "workspaceId") {
+        formData.append(key, options[key]);
+      }
     });
 
+    // Include workspaceId in URL query parameter
+    const url = `http://localhost:3001/api/generate-code?workspaceId=${options.workspaceId}`;
+
     // Log the full request details
-    console.log(
-      "Sending code generation request with workspace:",
-      options.workspaceId
-    );
+    console.log("Sending code generation request to:", url);
+    console.log("With workspace ID:", options.workspaceId);
 
     // Send request to API
-    const response = await fetch("http://localhost:3001/api/generate-code", {
+    const response = await fetch(url, {
       method: "POST",
       body: formData,
     });

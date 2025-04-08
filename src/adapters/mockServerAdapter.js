@@ -11,24 +11,24 @@ export const generateMockServer = async (file, options = {}) => {
     const formData = new FormData();
     formData.append("swaggerFile", file);
 
-    // Add options to formData
+    // Add options to formData EXCEPT workspaceId (we'll put that in URL)
     Object.keys(options).forEach((key) => {
-      formData.append(key, options[key]);
+      if (key !== "workspaceId") {
+        formData.append(key, options[key]);
+      }
     });
 
-    console.log(
-      "Sending mock server request with workspace:",
-      options.workspaceId
-    );
+    // Include workspaceId in URL query parameter
+    const url = `http://localhost:3001/api/generate-mock-server?workspaceId=${options.workspaceId}`;
+
+    console.log("Sending mock server request to:", url);
+    console.log("With workspace ID:", options.workspaceId);
 
     // Make the API request
-    const response = await fetch(
-      "http://localhost:3001/api/generate-mock-server",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
