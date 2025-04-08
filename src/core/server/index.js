@@ -3,14 +3,21 @@ const path = require("path");
 const generateRoutes = require("./generateRoutes");
 const generateDb = require("./generateDb");
 
-// Ensure server folder exists
-if (!fs.existsSync("server")) {
-  fs.mkdirSync("server");
-}
-
-// Read swagger.json file
+/**
+ * Generate mock server files from a Swagger specification
+ * @param {string} swaggerFilePath - Path to Swagger JSON file
+ * @returns {Object} Information about the generated mock server
+ */
 async function generateMockServer(swaggerFilePath) {
   try {
+    console.log("Generating mock server from:", swaggerFilePath);
+
+    // Ensure server folder exists
+    if (!fs.existsSync("server")) {
+      fs.mkdirSync("server");
+    }
+
+    // Read and parse swagger file
     const swaggerContent = fs.readFileSync(swaggerFilePath, "utf8");
     const swagger = JSON.parse(swaggerContent);
 
@@ -36,14 +43,44 @@ async function generateMockServer(swaggerFilePath) {
     console.log(
       "npx json-server --watch server/db.json --routes server/routes.json --port 3004"
     );
+
+    // Extract some sample endpoints for the UI
+    const sampleEndpoints = [];
+    const routeKeys = Object.keys(routes).slice(0, 5);
+    routeKeys.forEach((route) => {
+      let method = "GET";
+      // Try to infer method from route path
+      if (route.includes("POST")) method = "POST";
+      else if (route.includes("PUT")) method = "PUT";
+      else if (route.includes("DELETE")) method = "DELETE";
+
+      sampleEndpoints.push({
+        path: route,
+        method,
+        description: `${method} ${routes[route]}`,
+      });
+    });
+
+    // Return information about the generated server
+    return {
+      success: true,
+      dbPath: "server/db.json",
+      routesPath: "server/routes.json",
+      endpointCount: Object.keys(routes).length,
+      endpoints: sampleEndpoints,
+      port: 3004,
+      command:
+        "npx json-server --watch server/db.json --routes server/routes.json --port 3004",
+    };
   } catch (error) {
     console.error("Error processing swagger file:", error);
+    throw error;
   }
 }
 
 // Generate README.md
 function generateReadme(swagger) {
-  const apiTitle = swagger.info.title || "API";
+  const apiTitle = swagger.info?.title || "API";
   const readme = `# Mock Server for ${apiTitle}
 
 ## How to Use
@@ -60,8 +97,10 @@ function generateReadme(swagger) {
   fs.writeFileSync(path.join("server", "README.md"), readme);
 }
 
-// Get swagger.json file path from command line argument
-const swaggerPath = process.argv[2] || "./flattened-swagger.json";
-generateMockServer(swaggerPath);
+// If called directly from command line
+if (require.main === module) {
+  const swaggerPath = process.argv[2] || "./flattened-swagger.json";
+  generateMockServer(swaggerPath);
+}
 
 module.exports = generateMockServer;

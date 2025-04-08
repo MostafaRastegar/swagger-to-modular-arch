@@ -1,5 +1,5 @@
 // MockServerScreen.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Upload,
   Server,
@@ -10,7 +10,10 @@ import {
   Database,
   FileJson,
   Check,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
+import { generateMockServer } from "../../adapters/mockServerAdapter";
 
 const MockServerScreen = () => {
   const [file, setFile] = useState(null);
@@ -18,42 +21,85 @@ const MockServerScreen = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [mockServer, setMockServer] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(null);
+  const [endpoints, setEndpoints] = useState([]);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  // Check if mock server is running when component mounts or
+  // when mockServer state changes
+  useEffect(() => {
+    if (mockServer) {
+      checkServerStatus();
+    }
+  }, [mockServer]);
+
+  const checkServerStatus = async () => {
+    setCheckingStatus(true);
+    try {
+      const response = await fetch(
+        "http://localhost:3001/api/mock-server/status"
+      );
+      const data = await response.json();
+      setIsRunning(data.running);
+    } catch (err) {
+      console.error("Error checking server status:", err);
+      setIsRunning(false);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files ? e.target.files[0] : e;
     if (selectedFile) {
       setFile(selectedFile);
 
       // Reset mock server state when a new file is uploaded
       setMockServer(null);
       setIsRunning(false);
+      setError(null);
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!file) return;
 
     setIsGenerating(true);
+    setError(null);
 
-    // Simulate API call to generate mock server
-    setTimeout(() => {
-      setIsGenerating(false);
+    try {
+      // Call the real API
+      const result = await generateMockServer(file);
+
+      if (result.success === false) {
+        throw new Error(result.message || "Failed to generate mock server");
+      }
+
       setMockServer({
-        dbPath: "server/db.json",
-        routesPath: "server/routes.json",
-        endpointCount: 12,
-        port: 3004,
-        command:
-          "npx json-server --watch server/db.json --routes server/routes.json --port 3004",
+        dbPath: result.dbPath,
+        routesPath: result.routesPath,
+        endpointCount: result.endpointCount,
+        port: result.port,
+        command: result.command,
       });
-    }, 1500);
+
+      if (result.endpoints && result.endpoints.length > 0) {
+        setEndpoints(result.endpoints);
+      }
+    } catch (err) {
+      console.error("Error generating mock server:", err);
+      setError(err.message || "Failed to generate mock server");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleRunServer = () => {
-    if (!mockServer) return;
-
-    // In a real implementation, this would actually start the mock server
-    setIsRunning(true);
+    // Open the instructions for running the server
+    // Since we can't start the server directly from the browser
+    alert(
+      `To run the mock server, open a terminal and run this command:\n\n${mockServer.command}`
+    );
   };
 
   const handleCopyCommand = () => {
@@ -68,14 +114,33 @@ const MockServerScreen = () => {
   };
 
   const renderEndpoints = () => {
-    // Sample endpoints for display purposes
-    const endpoints = [
-      { path: "/api/users", method: "GET", description: "Get all users" },
-      { path: "/api/users/{id}", method: "GET", description: "Get user by ID" },
-      { path: "/api/users", method: "POST", description: "Create a new user" },
-      { path: "/api/users/{id}", method: "PUT", description: "Update user" },
-      { path: "/api/users/{id}", method: "DELETE", description: "Delete user" },
-    ];
+    // Use real endpoints if available, otherwise use sample data
+    const displayEndpoints =
+      endpoints.length > 0
+        ? endpoints
+        : [
+            { path: "/api/users", method: "GET", description: "Get all users" },
+            {
+              path: "/api/users/{id}",
+              method: "GET",
+              description: "Get user by ID",
+            },
+            {
+              path: "/api/users",
+              method: "POST",
+              description: "Create a new user",
+            },
+            {
+              path: "/api/users/{id}",
+              method: "PUT",
+              description: "Update user",
+            },
+            {
+              path: "/api/users/{id}",
+              method: "DELETE",
+              description: "Delete user",
+            },
+          ];
 
     return (
       <div className="overflow-x-auto mt-4">
@@ -94,7 +159,7 @@ const MockServerScreen = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {endpoints.map((endpoint, index) => (
+            {displayEndpoints.map((endpoint, index) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -140,6 +205,13 @@ const MockServerScreen = () => {
           functional mock server.
         </p>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
           {file ? (
             <div>
@@ -184,10 +256,17 @@ const MockServerScreen = () => {
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
-            <Server size={20} className="mr-2" />
-            {isGenerating
-              ? "Generating Mock Server..."
-              : "Generate Mock Server"}
+            {isGenerating ? (
+              <>
+                <RefreshCw size={20} className="mr-2 animate-spin" />
+                Generating Mock Server...
+              </>
+            ) : (
+              <>
+                <Server size={20} className="mr-2" />
+                Generate Mock Server
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -258,30 +337,42 @@ const MockServerScreen = () => {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-sm text-gray-600 mr-2">Server Status:</span>
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  isRunning
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {isRunning
-                  ? "Running on port " + mockServer.port
-                  : "Not Running"}
-              </span>
+              {checkingStatus ? (
+                <span className="text-sm text-gray-600">
+                  <RefreshCw size={16} className="inline mr-1 animate-spin" />
+                  Checking...
+                </span>
+              ) : (
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    isRunning
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {isRunning
+                    ? "Running on port " + mockServer.port
+                    : "Not Running"}
+                </span>
+              )}
+
+              {!checkingStatus && !isRunning && (
+                <button
+                  onClick={checkServerStatus}
+                  className="ml-2 text-xs text-blue-600 hover:text-blue-800"
+                >
+                  <RefreshCw size={12} className="inline mr-1" />
+                  Refresh
+                </button>
+              )}
             </div>
 
             <button
               onClick={handleRunServer}
-              disabled={isRunning}
-              className={`flex items-center px-4 py-2 rounded ${
-                isRunning
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
-              }`}
+              className="flex items-center px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
             >
               <Play size={18} className="mr-2" />
-              {isRunning ? "Server Running" : "Start Server"}
+              How to Run Server
             </button>
           </div>
         </div>

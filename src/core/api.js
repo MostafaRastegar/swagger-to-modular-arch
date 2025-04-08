@@ -241,6 +241,115 @@ app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
   }
 });
 
+// Add this code to src/core/api.js right before the app.listen() call
+
+// Import generateMockServer function
+const generateMockServer = require("./server/index");
+
+// API for generating mock server
+app.post(
+  "/api/generate-mock-server",
+  upload.single("swaggerFile"),
+  (req, res) => {
+    try {
+      console.log("Generating mock server from file:", req.file);
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No swagger file uploaded",
+        });
+      }
+
+      // Generate the mock server
+      generateMockServer(req.file.path);
+
+      // Get some info about the generated mock server
+      const dbPath = path.join(process.cwd(), "server", "db.json");
+      const routesPath = path.join(process.cwd(), "server", "routes.json");
+
+      // Count the number of endpoints by reading the routes.json file
+      let endpointCount = 0;
+      if (fs.existsSync(routesPath)) {
+        const routes = JSON.parse(fs.readFileSync(routesPath, "utf8"));
+        endpointCount = Object.keys(routes).length;
+      }
+
+      // Get sample endpoints for display
+      const sampleEndpoints = [];
+      if (fs.existsSync(routesPath)) {
+        const routes = JSON.parse(fs.readFileSync(routesPath, "utf8"));
+        // Get up to 5 sample endpoints
+        const routeKeys = Object.keys(routes).slice(0, 5);
+        routeKeys.forEach((route) => {
+          let method = "GET";
+          // Try to infer method from route path
+          if (route.includes("POST")) method = "POST";
+          else if (route.includes("PUT")) method = "PUT";
+          else if (route.includes("DELETE")) method = "DELETE";
+
+          sampleEndpoints.push({
+            path: route,
+            method,
+            description: `${method} ${routes[route]}`,
+          });
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Mock server generated successfully",
+        dbPath: "server/db.json",
+        routesPath: "server/routes.json",
+        endpointCount,
+        port: 3004,
+        command:
+          "npx json-server --watch server/db.json --routes server/routes.json --port 3004",
+        endpoints: sampleEndpoints,
+      });
+    } catch (error) {
+      console.error("Error generating mock server:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to generate mock server",
+      });
+    }
+  }
+);
+
+// API for checking if mock server is running
+app.get("/api/mock-server/status", (req, res) => {
+  try {
+    // Simple ping to check if json-server is running
+    fetch("http://localhost:3004/")
+      .then((response) => {
+        if (response.ok) {
+          res.json({
+            running: true,
+            port: 3004,
+            message: "Mock server is running",
+          });
+        } else {
+          res.json({
+            running: false,
+            message: "Mock server is not responding properly",
+          });
+        }
+      })
+      .catch(() => {
+        res.json({
+          running: false,
+          message: "Mock server is not running",
+        });
+      });
+  } catch (error) {
+    res.json({
+      running: false,
+      message: "Error checking mock server status",
+    });
+  }
+});
+
 // افزودن مسیری برای آزمودن وضعیت API
 app.get("/api/status", (req, res) => {
   res.json({
