@@ -1,9 +1,5 @@
-// Updated src/adapters/codeGeneratorAdapter.js
+// Update src/adapters/codeGeneratorAdapter.js
 export const generateCode = async (file, options) => {
-  if (!file) {
-    throw new Error("No file provided");
-  }
-
   try {
     console.log("Sending request to generate code with options:", options);
 
@@ -13,11 +9,18 @@ export const generateCode = async (file, options) => {
     }
 
     const formData = new FormData();
-    formData.append("swaggerFile", file);
+
+    // Only append file if it exists
+    if (file) {
+      formData.append("swaggerFile", file);
+    } else {
+      // Indicate we want to use the default file
+      formData.append("useDefaultFile", "true");
+    }
 
     // Add options to formData EXCEPT workspaceId (we'll put that in URL)
     Object.keys(options).forEach((key) => {
-      if (key !== "workspaceId") {
+      if (key !== "workspaceId" && key !== "useDefaultFile") {
         formData.append(key, options[key]);
       }
     });
@@ -27,7 +30,7 @@ export const generateCode = async (file, options) => {
 
     // Log the full request details
     console.log("Sending code generation request to:", url);
-    console.log("With workspace ID:", options.workspaceId);
+    console.log("Using default file:", !file);
 
     // Send request to API
     const response = await fetch(url, {
@@ -42,12 +45,6 @@ export const generateCode = async (file, options) => {
     }
 
     const result = await response.json();
-    console.log("Received code generation response:", result);
-
-    // Ensure workspace ID is included in the result
-    if (result.success && !result.workspaceId) {
-      result.workspaceId = options.workspaceId;
-    }
 
     return result;
   } catch (error) {

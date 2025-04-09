@@ -70,7 +70,9 @@ const MockServerScreen = () => {
   };
 
   const handleGenerate = async () => {
-    if (!file) return;
+    if (!file && !defaultSwaggerFile) return;
+    const fileToUse = file || defaultSwaggerFile;
+
     if (!currentWorkspace) {
       setError(
         "Please select or create a workspace before generating mock server"
@@ -91,7 +93,7 @@ const MockServerScreen = () => {
       };
 
       // Call the real API with settings
-      const result = await generateMockServer(file, mockServerOptions);
+      const result = await generateMockServer(fileToUse, mockServerOptions);
 
       if (result.success === false) {
         throw new Error(result.message || "Failed to generate mock server");
@@ -300,9 +302,9 @@ const MockServerScreen = () => {
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleGenerate}
-            disabled={!file || isGenerating}
+            disabled={(!file && !defaultSwaggerFile) || isGenerating}
             className={`flex items-center px-6 py-3 rounded-lg ${
-              !file || isGenerating
+              (!file && !defaultSwaggerFile) || isGenerating
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
@@ -315,7 +317,9 @@ const MockServerScreen = () => {
             ) : (
               <>
                 <Server size={20} className="mr-2" />
-                Generate Mock Server
+                {file || defaultSwaggerFile
+                  ? "Generate Mock Server"
+                  : "Upload Swagger File"}
               </>
             )}
           </button>

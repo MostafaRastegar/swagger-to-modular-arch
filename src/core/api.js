@@ -963,9 +963,9 @@ if (!fs.existsSync(WORKSPACES_DIR)) {
  */
 function createWorkspace(name) {
   const id = uuidv4();
+  const shareCode = generateUniqueShareCode();
   const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
 
-  // Create workspace directory and subdirectories
   fs.mkdirSync(workspacePath, { recursive: true });
   fs.mkdirSync(path.join(workspacePath, "output"), { recursive: true });
   fs.mkdirSync(path.join(workspacePath, "uploads"), { recursive: true });
@@ -973,17 +973,53 @@ function createWorkspace(name) {
   const workspace = {
     id,
     name,
+    shareCode,
     path: workspacePath,
     created: new Date().toISOString(),
-    defaultSwaggerFile: null, // Add field for default Swagger file
+    defaultSwaggerFile: null,
+    members: [{ role: "owner" }],
   };
 
-  // Save workspace metadata
+  // ذخیره متادیتا
   const metadataPath = path.join(workspacePath, "workspace.json");
   fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
 
   return workspace;
 }
+
+function generateUniqueShareCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+app.post("/api/workspaces/join", (req, res) => {
+  try {
+    const { shareCode } = req.body;
+
+    // پیدا کردن workspace با shareCode
+    const workspace = getAllWorkspaces().find(
+      (ws) => ws.shareCode === shareCode
+    );
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid workspace share code",
+      });
+    }
+
+    // بازگرداندن اطلاعات workspace
+    res.json({
+      success: true,
+      workspace,
+    });
+  } catch (error) {
+    console.error("Error joining workspace:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to join workspace",
+    });
+  }
+});
 
 /**
  * Gets a workspace by ID

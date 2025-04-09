@@ -196,18 +196,6 @@ const CodeGeneratorScreen = () => {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2">Output Directory</label>
-            <input
-              type="text"
-              name="outputDir"
-              value={options.outputDir}
-              onChange={handleOptionChange}
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., src/modules"
-            />
-          </div>
-
-          <div>
             <label className="block text-gray-700 mb-2">Folder Structure</label>
             <select
               name="folderStructure"

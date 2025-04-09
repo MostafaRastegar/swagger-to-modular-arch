@@ -12,6 +12,34 @@ export function WorkspaceProvider({ children }) {
   const [defaultSwaggerFile, setDefaultSwaggerFile] = useState(null);
   const [checkingDefaultFile, setCheckingDefaultFile] = useState(false);
 
+  const joinWorkspaceByShareCode = async (shareCode) => {
+    try {
+      const response = await fetch(
+        "http://localhost:3001/api/workspaces/join",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ shareCode }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // سوئیچ کردن به workspace جدید
+        setCurrentWorkspace(data.workspace);
+        return data.workspace;
+      } else {
+        throw new Error(data.message || "Failed to join workspace");
+      }
+    } catch (err) {
+      console.error("Error joining workspace:", err);
+      setError(err.message);
+      throw err;
+    }
+  };
   // Load workspaces on mount
   useEffect(() => {
     fetchWorkspaces();
@@ -226,6 +254,7 @@ export function WorkspaceProvider({ children }) {
         checkingDefaultFile,
         checkDefaultSwaggerFile,
         setWorkspaceDefaultSwagger,
+        joinWorkspaceByShareCode,
       }}
     >
       {children}

@@ -27,11 +27,25 @@ const WorkspaceScreen = () => {
     switchWorkspace,
     createWorkspace,
     clearWorkspace,
+    joinWorkspaceByShareCode,
   } = useWorkspace();
 
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [workspaceStats, setWorkspaceStats] = useState({});
   const [copiedId, setCopiedId] = useState(null);
+  const [shareCode, setShareCode] = useState("");
+  const [joinError, setJoinError] = useState(null);
+
+  const handleJoinWorkspace = async (e) => {
+    e.preventDefault();
+    try {
+      await joinWorkspaceByShareCode(shareCode);
+      setShareCode("");
+      setJoinError(null);
+    } catch (err) {
+      setJoinError(err.message);
+    }
+  };
 
   // Fetch workspace stats
   useEffect(() => {
@@ -95,26 +109,26 @@ const WorkspaceScreen = () => {
         </p>
 
         {/* Create new workspace */}
-        <div className="mb-6">
-          <h4 className="font-medium mb-2">Create New Workspace</h4>
-          <form onSubmit={handleCreateWorkspace} className="flex">
+        <div className="mt-6">
+          <h4 className="font-medium mb-2">Join Workspace</h4>
+          <form onSubmit={handleJoinWorkspace} className="flex">
             <input
               type="text"
-              placeholder="Enter workspace name"
-              className="flex-1 p-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newWorkspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              placeholder="Enter share code"
+              value={shareCode}
+              onChange={(e) => setShareCode(e.target.value)}
+              className="flex-1 p-2 border rounded-l-md uppercase"
             />
             <Button
               type="submit"
               variant="primary"
               className="rounded-l-none"
-              icon={<PlusCircle size={18} />}
-              disabled={!newWorkspaceName || loading}
+              disabled={shareCode.length !== 6}
             >
-              Create
+              Join
             </Button>
           </form>
+          {joinError && <p className="text-red-500 mt-2">{joinError}</p>}
         </div>
 
         {/* Current workspace info */}
@@ -213,6 +227,9 @@ const WorkspaceScreen = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Size
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      share code
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -220,6 +237,7 @@ const WorkspaceScreen = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {workspaces.map((workspace) => {
+                    console.log("workspace :>> ", workspace);
                     const stats = workspaceStats[workspace.id] || {
                       files: 0,
                       lastModified: workspace.created,
@@ -258,6 +276,16 @@ const WorkspaceScreen = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {stats.size} MB
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <button
+                              onClick={() => handleCopyId(workspace.shareCode)}
+                              className="text-blue-600 hover:text-blue-800 font-mono"
+                            >
+                              {workspace.shareCode}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-2">
