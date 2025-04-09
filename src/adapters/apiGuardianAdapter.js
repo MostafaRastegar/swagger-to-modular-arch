@@ -7,17 +7,35 @@ export const compareSpecs = async (oldSpecFile, newSpecFile, options) => {
     }
 
     const formData = new FormData();
-    formData.append("oldSpec", oldSpecFile);
-    formData.append("newSpec", newSpecFile);
+
+    // Only attach files if provided
+    if (oldSpecFile) {
+      formData.append("oldSpec", oldSpecFile);
+    }
+
+    if (newSpecFile) {
+      formData.append("newSpec", newSpecFile);
+    }
+
     formData.append("reportLevel", options.reportLevel || "all");
     formData.append("outputFormat", options.outputFormat || "json");
-    // Don't include workspaceId in form data
+
+    // Add flags to use default file if needed
+    if (options.useDefaultForOld) {
+      formData.append("useDefaultForOld", "true");
+    }
+
+    if (options.useDefaultForNew) {
+      formData.append("useDefaultForNew", "true");
+    }
 
     // Include workspaceId in URL query parameter
     const url = `http://localhost:3001/api/guardian/compare-specs?workspaceId=${options.workspaceId}`;
 
     console.log("Sending Guardian compare request to:", url);
     console.log("With workspace ID:", options.workspaceId);
+    console.log("Use default for old:", options.useDefaultForOld);
+    console.log("Use default for new:", options.useDefaultForNew);
 
     const response = await fetch(url, {
       method: "POST",
@@ -30,12 +48,6 @@ export const compareSpecs = async (oldSpecFile, newSpecFile, options) => {
     }
 
     const result = await response.json();
-
-    // Ensure workspace ID is included in the report
-    if (result.report && !result.report.workspaceId) {
-      result.report.workspaceId = options.workspaceId;
-    }
-
     return result.report;
   } catch (error) {
     console.error("Error comparing specs:", error);

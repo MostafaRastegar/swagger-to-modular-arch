@@ -70,7 +70,6 @@ const storage = multer.diskStorage({
 // تنظیم ذخیره‌سازی فایل‌های آپلود شده
 const upload = multer({ storage });
 
-// Update the API Guardian endpoint to be workspace-aware
 app.post(
   "/api/guardian/compare-specs",
   upload.fields([
@@ -97,8 +96,52 @@ app.post(
         });
       }
 
-      const oldSpecFile = req.files["oldSpec"][0].path;
-      const newSpecFile = req.files["newSpec"][0].path;
+      // Determine file paths based on uploads and default settings
+      let oldSpecFile, newSpecFile;
+      let usedDefaultFile = false;
+
+      // Check if we should use the default file
+      const useDefaultForOld = req.body.useDefaultForOld === "true";
+      const useDefaultForNew = req.body.useDefaultForNew === "true";
+
+      if (req.files["oldSpec"] && req.files["oldSpec"][0]) {
+        // User uploaded an old spec file
+        oldSpecFile = req.files["oldSpec"][0].path;
+      } else if (
+        useDefaultForOld &&
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // Use default file for old spec
+        oldSpecFile = workspace.defaultSwaggerFile.path;
+        usedDefaultFile = true;
+        console.log("Using default file for old spec:", oldSpecFile);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Old specification file is required",
+        });
+      }
+
+      if (req.files["newSpec"] && req.files["newSpec"][0]) {
+        // User uploaded a new spec file
+        newSpecFile = req.files["newSpec"][0].path;
+      } else if (
+        useDefaultForNew &&
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // Use default file for new spec
+        newSpecFile = workspace.defaultSwaggerFile.path;
+        usedDefaultFile = true;
+        console.log("Using default file for new spec:", newSpecFile);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "New specification file is required",
+        });
+      }
+
       const reportLevel = req.body.reportLevel || "all";
       const outputFormat = req.body.outputFormat || "json";
 
@@ -118,9 +161,10 @@ app.post(
       const reportPath = path.join(workspaceReportsDir, reportFilename);
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
-      // Add report file path to response
+      // Add report file path and workspace info to response
       report.reportPath = path.relative(process.cwd(), reportPath);
       report.workspaceId = workspaceId;
+      report.usedDefaultFile = usedDefaultFile;
 
       res.json({ report });
     } catch (error) {
@@ -428,11 +472,12 @@ app.get("/api/download/:outputPath(*)", (req, res) => {
 // Replace the existing code generation endpoint with this workspace-aware version
 // In src/core/api.js - replace the generate-code endpoint
 
+// Modify the code generation endpoint in src/core/api.js
 app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
   try {
     console.log("Received file:", req.file);
     console.log("Received options:", req.body);
-    console.log("Query params:", req.query);
+    console.log("Use default file:", req.body.useDefaultFile);
 
     // Get and validate workspace ID
     const workspaceId = req.query.workspaceId;
@@ -452,10 +497,27 @@ app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
       });
     }
 
-    if (!req.file) {
+    // Determine which Swagger file to use
+    let swaggerFilePath;
+    let useDefaultFile = false;
+
+    if (req.file) {
+      // User uploaded a file, use it
+      swaggerFilePath = req.file.path;
+    } else if (
+      req.body.useDefaultFile === "true" &&
+      workspace.defaultSwaggerFile &&
+      fs.existsSync(workspace.defaultSwaggerFile.path)
+    ) {
+      // No file uploaded, but asked to use default file
+      swaggerFilePath = workspace.defaultSwaggerFile.path;
+      useDefaultFile = true;
+      console.log("Using default Swagger file:", swaggerFilePath);
+    } else {
+      // No file uploaded and no default file available or not requested
       return res.status(400).json({
         success: false,
-        message: "No swagger file uploaded",
+        message: "No Swagger file uploaded and no default file available",
       });
     }
 
@@ -476,7 +538,7 @@ app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
     }
 
     // Generate code
-    generateModules(req.file.path, {
+    generateModules(swaggerFilePath, {
       outputDir,
       createFolders,
       folderStructure,
@@ -490,7 +552,8 @@ app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
       message: "Code generated successfully",
       outputPath: relativePath,
       workspaceId: workspaceId,
-      fileInfo: req.file,
+      fileInfo: req.file ? req.file : workspace.defaultSwaggerFile,
+      usedDefaultFile: useDefaultFile,
     });
   } catch (error) {
     console.error("Error in generate-code endpoint:", error);
@@ -582,13 +645,12 @@ app.get("/api/docs/workspaces", (req, res) => {
 });
 
 // In src/core/api.js - update the generate-mock-server endpoint
-
 app.post(
   "/api/generate-mock-server",
   upload.single("swaggerFile"),
   (req, res) => {
     try {
-      console.log("Generating mock server from file:", req.file);
+      console.log("Generating mock server...");
       console.log("Mock server options:", req.body);
 
       // Get and validate workspace ID
@@ -609,10 +671,28 @@ app.post(
         });
       }
 
-      if (!req.file) {
+      // Determine which Swagger file to use
+      let swaggerFilePath;
+      let useDefaultFile = false;
+
+      if (req.file) {
+        // User uploaded a file, use it
+        swaggerFilePath = req.file.path;
+        console.log("Using uploaded Swagger file:", swaggerFilePath);
+      } else if (
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // No file uploaded, but workspace has a default file
+        swaggerFilePath = workspace.defaultSwaggerFile.path;
+        useDefaultFile = true;
+        console.log("Using default Swagger file:", swaggerFilePath);
+      } else {
+        // No file uploaded and no default file available
         return res.status(400).json({
           success: false,
-          message: "No swagger file uploaded",
+          message:
+            "No Swagger file uploaded and no default file available for this workspace",
         });
       }
 
@@ -710,7 +790,7 @@ app.post(
       const dataEntryCount = parseInt(req.body.dataEntryCount) || 5;
 
       // Generate the mock server in the workspace
-      generateWorkspaceMockServer(req.file.path, workspaceServerDir)
+      generateWorkspaceMockServer(swaggerFilePath, workspaceServerDir)
         .then((result) => {
           // Return relative paths for client use
           const relativeDbPath = path.relative(process.cwd(), result.dbPath);
@@ -720,12 +800,8 @@ app.post(
           );
 
           // Build the command with the specified port and CORS option
+          const port = parseInt(req.body.port) || 3004;
           let command = `npx json-server --watch ${relativeDbPath} --routes ${relativeRoutesPath} --port ${port}`;
-
-          // Add CORS if enabled
-          // if (enableCors) {
-          //   command += " --middlewares cors";
-          // }
 
           res.json({
             success: true,
@@ -737,6 +813,7 @@ app.post(
             port,
             command,
             endpoints: result.endpoints,
+            usedDefaultFile: useDefaultFile,
           });
         })
         .catch((error) => {
@@ -755,6 +832,7 @@ app.post(
     }
   }
 );
+
 // API for checking if mock server is running
 app.get("/api/mock-server/status", (req, res) => {
   try {
@@ -897,6 +975,7 @@ function createWorkspace(name) {
     name,
     path: workspacePath,
     created: new Date().toISOString(),
+    defaultSwaggerFile: null, // Add field for default Swagger file
   };
 
   // Save workspace metadata
@@ -1053,6 +1132,140 @@ app.get("/api/workspaces/:id", (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get workspace",
+    });
+  }
+});
+
+// Add to src/core/api.js
+
+// Set a Swagger file as the default for a workspace
+app.post(
+  "/api/workspaces/:id/default-swagger",
+  upload.single("swaggerFile"),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const workspace = getWorkspace(id);
+
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No swagger file uploaded",
+        });
+      }
+
+      // Validate Swagger file (similar to validateSpecFile)
+      try {
+        const swagger = parseSwaggerFile(req.file.path);
+
+        // If successful, update the workspace with default file info
+        workspace.defaultSwaggerFile = {
+          path: req.file.path,
+          name: req.file.originalname,
+          uploadedAt: new Date().toISOString(),
+          endpoints: extractUniqueTags(swagger).length,
+        };
+
+        // Save updated workspace metadata
+        const metadataPath = path.join(
+          WORKSPACES_DIR,
+          `ws-${id}`,
+          "workspace.json"
+        );
+        fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
+        res.json({
+          success: true,
+          message: "Default Swagger file set successfully",
+          fileInfo: workspace.defaultSwaggerFile,
+        });
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Swagger specification file",
+          details: error.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error setting default Swagger file:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to set default Swagger file",
+      });
+    }
+  }
+);
+
+// Get default Swagger file info for a workspace
+app.get("/api/workspaces/:id/default-swagger", (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    if (!workspace.defaultSwaggerFile) {
+      return res.status(404).json({
+        success: false,
+        message: "No default Swagger file set for this workspace",
+      });
+    }
+
+    res.json({
+      success: true,
+      defaultSwaggerFile: workspace.defaultSwaggerFile,
+    });
+  } catch (error) {
+    console.error("Error getting default Swagger file:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get default Swagger file",
+    });
+  }
+});
+
+// Check if default Swagger file exists for a workspace
+app.get("/api/workspaces/:id/has-default-swagger", (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    const hasDefaultSwagger = Boolean(
+      workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+    );
+
+    res.json({
+      success: true,
+      hasDefaultSwagger,
+      defaultSwaggerFile: hasDefaultSwagger
+        ? workspace.defaultSwaggerFile
+        : null,
+    });
+  } catch (error) {
+    console.error("Error checking default Swagger file:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to check default Swagger file",
     });
   }
 });

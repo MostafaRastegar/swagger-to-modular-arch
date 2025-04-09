@@ -12,6 +12,7 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { generateMockServer } from "../../adapters/mockServerAdapter";
 import { useSettings } from "../../context/SettingsContext";
@@ -20,6 +21,7 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 
 const MockServerScreen = () => {
   const { settings } = useSettings();
+  const { currentWorkspace, defaultSwaggerFile } = useWorkspace();
   const [file, setFile] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -28,7 +30,7 @@ const MockServerScreen = () => {
   const [error, setError] = useState(null);
   const [endpoints, setEndpoints] = useState([]);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const { currentWorkspace } = useWorkspace();
+  const [usedDefaultFile, setUsedDefaultFile] = useState(false);
 
   // Check if mock server is running when component mounts or
   // when mockServer state changes
@@ -63,6 +65,7 @@ const MockServerScreen = () => {
       setMockServer(null);
       setIsRunning(false);
       setError(null);
+      setUsedDefaultFile(false);
     }
   };
 
@@ -99,6 +102,7 @@ const MockServerScreen = () => {
         /--port \d+/,
         `--port ${settings.mockServer.defaultPort}`
       );
+
       setMockServer({
         dbPath: result.dbPath,
         routesPath: result.routesPath,
@@ -111,6 +115,8 @@ const MockServerScreen = () => {
       if (result.endpoints && result.endpoints.length > 0) {
         setEndpoints(result.endpoints);
       }
+
+      setUsedDefaultFile(result.usedDefaultFile);
     } catch (err) {
       console.error("Error generating mock server:", err);
       setError(err.message || "Failed to generate mock server");
@@ -222,6 +228,24 @@ const MockServerScreen = () => {
       {/* File Upload Section */}
       <WorkspaceIndicator />
 
+      {/* Default File Indicator */}
+      {currentWorkspace && defaultSwaggerFile && !file && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative">
+          <div className="flex items-center">
+            <Info className="mr-2" size={20} />
+            <div>
+              <strong className="font-bold">
+                Using default Swagger file:{" "}
+              </strong>
+              <span className="block sm:inline">{defaultSwaggerFile.name}</span>
+              <p className="text-sm mt-1">
+                Upload a different file above to override the default file.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
           <Server size={20} className="mr-2 text-blue-600" />
@@ -305,6 +329,21 @@ const MockServerScreen = () => {
             <Server size={20} className="mr-2 text-green-600" />
             Mock Server Ready
           </h3>
+
+          {/* Add an indicator when default file was used */}
+          {usedDefaultFile && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4">
+              <div className="flex items-center">
+                <Info className="mr-2" size={20} />
+                <div>
+                  <span className="font-bold">
+                    Mock server was generated using the default Swagger file:{" "}
+                    {defaultSwaggerFile?.name}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div className="flex items-center">

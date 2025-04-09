@@ -12,6 +12,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useWorkspace } from "../../context/WorkspaceContext";
+import DefaultSwaggerFileManager from "../workspace/DefaultSwaggerFileManager"; // Import the new component
+
 import Button from "../shared/Button";
 import Card from "../shared/Card";
 
@@ -297,6 +299,7 @@ const WorkspaceScreen = () => {
           )}
         </div>
       </Card>
+      {currentWorkspace && <DefaultSwaggerFileManager />}
     </div>
   );
 };

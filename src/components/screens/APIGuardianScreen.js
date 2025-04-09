@@ -29,7 +29,8 @@ const APIGuardianScreen = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
-  const { currentWorkspace } = useWorkspace();
+  const [usedDefaultFile, setUsedDefaultFile] = useState(false);
+  const { currentWorkspace, defaultSwaggerFile } = useWorkspace();
 
   // Update file validation function to handle workspace
   const handleFileValidation = async (file, type) => {
@@ -70,6 +71,15 @@ const APIGuardianScreen = () => {
       return;
     }
 
+    // Check for files - for API Guardian we need at least one file (old or new)
+    // and default can be used for the other
+    if (!oldSpec && !newSpec && !defaultSwaggerFile) {
+      setError(
+        "Please upload at least one Swagger file or set a default file for this workspace"
+      );
+      return;
+    }
+
     setIsComparing(true);
     setError(null);
 
@@ -79,12 +89,18 @@ const APIGuardianScreen = () => {
         reportLevel: settings.guardian.defaultReportLevel,
         outputFormat: settings.guardian.defaultReportFormat,
         workspaceId: currentWorkspace.id,
+        useDefaultForOld: !oldSpec && defaultSwaggerFile, // Use default file if old spec not provided
+        useDefaultForNew: !newSpec && defaultSwaggerFile, // Use default file if new spec not provided
       };
 
       console.log("Comparing specs with options:", compareOptions);
-      const report = await compareSpecs(oldSpec, newSpec, compareOptions);
+      const result = await compareSpecs(oldSpec, newSpec, compareOptions);
 
       setReport(report);
+      // Check if we used the default file
+      if (result.usedDefaultFile) {
+        setUsedDefaultFile(true);
+      }
 
       // Auto export report if enabled
       if (settings.guardian.autoExportReport) {
@@ -107,7 +123,9 @@ const APIGuardianScreen = () => {
     setNewSpec(null);
     setReport(null);
     setError(null);
+    setUsedDefaultFile(false);
   };
+
   return (
     <div className="space-y-6">
       {/* File Upload Section */}
@@ -122,6 +140,29 @@ const APIGuardianScreen = () => {
             Upload two versions of your API specification to detect breaking
             changes.
           </p>
+
+          {currentWorkspace && defaultSwaggerFile && (!oldSpec || !newSpec) && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4">
+              <div className="flex items-center">
+                <Info className="mr-2" size={20} />
+                <div>
+                  <strong className="font-bold">
+                    Available default Swagger file:{" "}
+                  </strong>
+                  <span className="block sm:inline">
+                    {defaultSwaggerFile.name}
+                  </span>
+                  <p className="text-sm mt-1">
+                    {!oldSpec && !newSpec
+                      ? "Default file can be used for either old or new specification."
+                      : !oldSpec
+                      ? "Default file will be used as old specification if not provided."
+                      : "Default file will be used as new specification if not provided."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -155,9 +196,13 @@ const APIGuardianScreen = () => {
           <div className="mt-6 flex justify-center">
             <Button
               onClick={handleCompare}
-              disabled={!oldSpec || !newSpec || isComparing}
+              disabled={
+                (!oldSpec && !newSpec && !defaultSwaggerFile) || isComparing
+              }
               variant={
-                !oldSpec || !newSpec || isComparing ? "secondary" : "primary"
+                (!oldSpec && !newSpec && !defaultSwaggerFile) || isComparing
+                  ? "secondary"
+                  : "primary"
               }
               size="large"
               icon={
@@ -191,7 +236,26 @@ const APIGuardianScreen = () => {
               Start New Comparison
             </button>
           </div>
-
+          {/* Used Default File Indicator */}
+          {usedDefaultFile && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative">
+              <div className="flex items-center">
+                <Info className="mr-2" size={20} />
+                <div>
+                  <strong className="font-bold">
+                    Used default Swagger file:{" "}
+                  </strong>
+                  <span className="block sm:inline">
+                    {defaultSwaggerFile?.name}
+                  </span>
+                  <p className="text-sm mt-1">
+                    The default file was used for the {!oldSpec ? "old" : "new"}{" "}
+                    API specification.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Summary Stats */}
           <SummaryStats report={report} />
 

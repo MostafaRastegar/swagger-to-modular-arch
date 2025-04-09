@@ -1,4 +1,3 @@
-// dashboard/src/components/screens/CodeGeneratorScreen.js
 import React, { useState, useEffect } from "react";
 import {
   Upload,
@@ -10,6 +9,7 @@ import {
   AlertCircle,
   RefreshCw,
   Download,
+  Info,
 } from "lucide-react";
 import {
   generateCode,
@@ -24,7 +24,7 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 import WorkspaceIndicator from "../workspace/WorkspaceIndicator";
 
 const CodeGeneratorScreen = () => {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, defaultSwaggerFile } = useWorkspace();
   const [file, setFile] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationComplete, setGenerationComplete] = useState(false);
@@ -32,12 +32,13 @@ const CodeGeneratorScreen = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState(null);
   const [apiStatus, setApiStatus] = useState(null);
+  const [usedDefaultFile, setUsedDefaultFile] = useState(false);
   const { settings } = useSettings();
   const [options, setOptions] = useState({
     outputDir: settings.general.defaultOutputDir || "src/generated",
     createFolders: false,
     folderStructure: "modules",
-    workspaceId: currentWorkspace?.id || null, // Initialize with current workspace ID
+    workspaceId: currentWorkspace?.id || null,
   });
 
   const handleFileChange = (selectedFile) => {
@@ -46,6 +47,7 @@ const CodeGeneratorScreen = () => {
     setGenerationComplete(false);
     setGenerationResult(null);
     setError(null);
+    setUsedDefaultFile(false);
   };
 
   const handleOptionChange = (e) => {
@@ -57,15 +59,22 @@ const CodeGeneratorScreen = () => {
   };
 
   const handleGenerate = async () => {
-    if (!file) return;
-
     // Check if we have a workspace
     if (!currentWorkspace) {
       setError("Please select or create a workspace before generating code");
       return;
     }
 
-    // Ensure workspaceId is included in options
+    // If no file is selected, check if we have a default file
+    if (!file && !defaultSwaggerFile) {
+      setError(
+        "Please upload a Swagger file or set a default file for this workspace"
+      );
+      return;
+    }
+
+    // Create options - note we don't need to explicitly set useDefaultFile flag
+    // as the adapter will handle this based on whether file is null
     const generateOptions = {
       ...options,
       workspaceId: currentWorkspace.id,
@@ -81,6 +90,7 @@ const CodeGeneratorScreen = () => {
       console.log("Generation result:", result);
       setGenerationResult(result);
       setGenerationComplete(true);
+      setUsedDefaultFile(result.usedDefaultFile);
     } catch (error) {
       console.error("Error generating code:", error);
       setError(error.message || "Failed to generate code");
@@ -88,7 +98,6 @@ const CodeGeneratorScreen = () => {
       setIsGenerating(false);
     }
   };
-
   useEffect(() => {
     if (currentWorkspace) {
       setOptions((prevOptions) => ({
@@ -120,6 +129,24 @@ const CodeGeneratorScreen = () => {
     <div className="space-y-6">
       {/* API Status Indicator */}
       <WorkspaceIndicator />
+      {/* Default File Indicator */}
+      {currentWorkspace && defaultSwaggerFile && !file && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative">
+          <div className="flex items-center">
+            <Info className="mr-2" size={20} />
+            <div>
+              <strong className="font-bold">
+                Using default Swagger file:{" "}
+              </strong>
+              <span className="block sm:inline">{defaultSwaggerFile.name}</span>
+              <p className="text-sm mt-1">
+                Upload a different file above to override the default file.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {apiStatus && apiStatus.status !== "ok" && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <strong className="font-bold">API Error: </strong>
@@ -131,6 +158,7 @@ const CodeGeneratorScreen = () => {
           </p>
         </div>
       )}
+
       {/* File Upload Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
@@ -144,6 +172,21 @@ const CodeGeneratorScreen = () => {
           file={file}
         />
       </div>
+
+      {generationComplete && generationResult && usedDefaultFile && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4">
+          <div className="flex items-center">
+            <Info className="mr-2" size={20} />
+            <div>
+              <span className="font-bold">
+                Code was generated using the default Swagger file:{" "}
+                {defaultSwaggerFile?.name}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Configuration Options */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
@@ -205,10 +248,16 @@ const CodeGeneratorScreen = () => {
         <Button
           onClick={handleGenerate}
           disabled={
-            !file || isGenerating || !apiStatus || apiStatus.status !== "ok"
+            (!file && !defaultSwaggerFile) ||
+            isGenerating ||
+            !apiStatus ||
+            apiStatus.status !== "ok"
           }
           variant={
-            !file || isGenerating || !apiStatus || apiStatus.status !== "ok"
+            (!file && !defaultSwaggerFile) ||
+            isGenerating ||
+            !apiStatus ||
+            apiStatus.status !== "ok"
               ? "secondary"
               : "primary"
           }
