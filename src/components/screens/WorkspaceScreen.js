@@ -20,21 +20,54 @@ import Card from "../shared/Card";
 const WorkspaceScreen = () => {
   const {
     currentWorkspace,
-    workspaces,
-    loading,
+
     error,
     fetchWorkspaces,
     switchWorkspace,
     createWorkspace,
     clearWorkspace,
     joinWorkspaceByShareCode,
+    workspaces,
+    loading,
+    isAuthReady,
   } = useWorkspace();
+  const [selectedWorkspace, setSelectedWorkspace] = useState(null);
 
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [workspaceStats, setWorkspaceStats] = useState({});
   const [copiedId, setCopiedId] = useState(null);
   const [shareCode, setShareCode] = useState("");
   const [joinError, setJoinError] = useState(null);
+
+  const renderWorkspaceMembers = () => {
+    if (!selectedWorkspace) return null;
+
+    return (
+      <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-medium mb-4">Workspace Members</h3>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="text-left p-2">User ID</th>
+              <th className="text-left p-2">Role</th>
+              <th className="text-left p-2">Joined At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedWorkspace.members.map((member, index) => (
+              <tr key={index} className="border-b">
+                <td className="p-2">{member.userId}</td>
+                <td className="p-2">{member.role}</td>
+                <td className="p-2">
+                  {new Date(member.joinedAt).toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const handleJoinWorkspace = async (e) => {
     e.preventDefault();
@@ -95,8 +128,19 @@ const WorkspaceScreen = () => {
     });
   };
 
+  if (!isAuthReady) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <RefreshCw size={24} className="animate-spin text-blue-500" />
+        <span className="ml-2">Loading user data...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {renderWorkspaceMembers()}
+
       <Card className="p-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
           <Briefcase size={20} className="mr-2 text-blue-600" />

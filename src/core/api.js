@@ -961,7 +961,7 @@ if (!fs.existsSync(WORKSPACES_DIR)) {
  * @param {string} name - Workspace name
  * @returns {object} Workspace information
  */
-function createWorkspace(name) {
+function createWorkspace(name, userId) {
   const id = uuidv4();
   const shareCode = generateUniqueShareCode();
   const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
@@ -974,13 +974,19 @@ function createWorkspace(name) {
     id,
     name,
     shareCode,
-    path: workspacePath,
+    creatorId: userId, // اضافه کردن creatorId
+    members: [
+      {
+        userId: userId, // اضافه کردن userId
+        role: "owner",
+        status: "active",
+        joinedAt: new Date().toISOString(),
+      },
+    ],
     created: new Date().toISOString(),
     defaultSwaggerFile: null,
-    members: [{ role: "owner" }],
   };
 
-  // ذخیره متادیتا
   const metadataPath = path.join(workspacePath, "workspace.json");
   fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
 
@@ -993,7 +999,7 @@ function generateUniqueShareCode() {
 
 app.post("/api/workspaces/join", (req, res) => {
   try {
-    const { shareCode } = req.body;
+    const { shareCode, userId } = req.body;
 
     // پیدا کردن workspace با shareCode
     const workspace = getAllWorkspaces().find(
@@ -1007,10 +1013,39 @@ app.post("/api/workspaces/join", (req, res) => {
       });
     }
 
-    // بازگرداندن اطلاعات workspace
+    // بررسی اینکه آیا کاربر قبلاً عضو workspace است
+    const existingMember = workspace.members.find(
+      (member) => member.userId === userId
+    );
+
+    if (existingMember) {
+      return res.status(200).json({
+        success: true,
+        workspace,
+        message: "Already a member of this workspace",
+      });
+    }
+
+    // اضافه کردن کاربر جدید
+    workspace.members.push({
+      userId,
+      role: "member", // نقش پیش‌فرض
+      status: "active",
+      joinedAt: new Date().toISOString(),
+    });
+
+    // بروزرسانی فایل متادیتا
+    const metadataPath = path.join(
+      WORKSPACES_DIR,
+      `ws-${workspace.id}`,
+      "workspace.json"
+    );
+    fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
     res.json({
       success: true,
       workspace,
+      message: "Successfully joined workspace",
     });
   } catch (error) {
     console.error("Error joining workspace:", error);
@@ -1091,16 +1126,42 @@ function getWorkspaceOutputPath(workspaceId) {
 // Create a new workspace
 app.post("/api/workspaces", (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, userId } = req.body;
 
-    if (!name) {
+    if (!name || !userId) {
       return res.status(400).json({
         success: false,
-        message: "Workspace name is required",
+        message: "Name and userId are required",
       });
     }
 
-    const workspace = createWorkspace(name);
+    const id = uuidv4();
+    const shareCode = generateUniqueShareCode();
+    const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
+
+    fs.mkdirSync(workspacePath, { recursive: true });
+    fs.mkdirSync(path.join(workspacePath, "output"), { recursive: true });
+    fs.mkdirSync(path.join(workspacePath, "uploads"), { recursive: true });
+
+    const workspace = {
+      id,
+      name,
+      shareCode,
+      creatorId: userId, // اضافه کردن creatorId
+      members: [
+        {
+          userId: userId, // اضافه کردن userId به members
+          role: "owner",
+          status: "active",
+          joinedAt: new Date().toISOString(),
+        },
+      ],
+      created: new Date().toISOString(),
+      defaultSwaggerFile: null,
+    };
+
+    const metadataPath = path.join(workspacePath, "workspace.json");
+    fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
 
     res.json({
       success: true,
@@ -1118,17 +1179,42 @@ app.post("/api/workspaces", (req, res) => {
 // Get all workspaces
 app.get("/api/workspaces", (req, res) => {
   try {
-    const workspaces = getAllWorkspaces();
+    const userId = req.query.userId;
+    console.log("Requested User ID:", userId);
+
+    // لاگ تمام workspace ها
+    const allWorkspaces = getAllWorkspaces();
+    console.log("All Workspaces:", JSON.stringify(allWorkspaces, null, 2));
+
+    const accessibleWorkspaces = allWorkspaces.filter((workspace) => {
+      console.log("Checking Workspace:", workspace.id);
+      console.log("Creator ID:", workspace.creatorId);
+      console.log("Members:", workspace.members);
+
+      const isAccessible =
+        workspace.creatorId === userId ||
+        workspace.members.some(
+          (member) => member.userId === userId && member.status === "active"
+        );
+
+      console.log("Is Accessible:", isAccessible);
+      return isAccessible;
+    });
+
+    console.log(
+      "Accessible Workspaces:",
+      JSON.stringify(accessibleWorkspaces, null, 2)
+    );
 
     res.json({
       success: true,
-      workspaces,
+      workspaces: accessibleWorkspaces,
     });
   } catch (error) {
-    console.error("Error getting workspaces:", error);
+    console.error("Error fetching workspaces:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to get workspaces",
+      message: error.message || "Failed to fetch workspaces",
     });
   }
 });

@@ -1,10 +1,14 @@
 // Update src/context/WorkspaceContext.js
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const WorkspaceContext = createContext();
 
 export function WorkspaceProvider({ children }) {
+  const { user } = useAuth();
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +25,26 @@ export function WorkspaceProvider({ children }) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ shareCode }),
+          body: JSON.stringify({
+            shareCode,
+            userId: user.id, // استفاده از ID کاربر فعلی
+          }),
         }
       );
 
       const data = await response.json();
 
       if (data.success) {
-        // سوئیچ کردن به workspace جدید
+        // به‌روزرسانی لیست workspace‌ها
+        // اگر workspace قبلاً در لیست نیست، اضافه می‌کنیم
+        const existingWorkspace = workspaces.find(
+          (ws) => ws.id === data.workspace.id
+        );
+
+        if (!existingWorkspace) {
+          setWorkspaces([...workspaces, data.workspace]);
+        }
+
         setCurrentWorkspace(data.workspace);
         return data.workspace;
       } else {
@@ -42,8 +58,9 @@ export function WorkspaceProvider({ children }) {
   };
   // Load workspaces on mount
   useEffect(() => {
-    fetchWorkspaces();
-
+    if (isAuthReady) {
+      fetchWorkspaces();
+    }
     // Try to load the last used workspace from localStorage
     const savedWorkspaceId = localStorage.getItem("currentWorkspaceId");
     if (savedWorkspaceId) {
@@ -51,7 +68,7 @@ export function WorkspaceProvider({ children }) {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthReady]);
 
   // Save current workspace ID to localStorage when it changes
   useEffect(() => {
@@ -65,22 +82,45 @@ export function WorkspaceProvider({ children }) {
     }
   }, [currentWorkspace]);
 
+  useEffect(() => {
+    // وقتی کاربر لود شد، پرچم آماده بودن را true می‌کنیم
+    if (user) {
+      setIsAuthReady(true);
+    }
+  }, [user]);
+
   // Fetch all workspaces
   const fetchWorkspaces = async () => {
     try {
+      // استفاده از ID کاربر فعلی
+      const userId = user?.id;
+
+      if (!userId) {
+        setError("User not authenticated");
+        return;
+      }
+
       setLoading(true);
-      const response = await fetch("http://localhost:3001/api/workspaces");
+      const response = await fetch(
+        `http://localhost:3001/api/workspaces?userId=${userId}`
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch workspaces: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setWorkspaces(data.workspaces || []);
-      setError(null);
+
+      if (data.success) {
+        setWorkspaces(data.workspaces);
+        setError(null);
+      } else {
+        throw new Error(data.message || "Failed to fetch workspaces");
+      }
     } catch (err) {
       console.error("Error fetching workspaces:", err);
       setError(err.message);
+      setWorkspaces([]);
     } finally {
       setLoading(false);
     }
@@ -113,38 +153,34 @@ export function WorkspaceProvider({ children }) {
   };
 
   // Create a new workspace
-  const createWorkspace = async (name) => {
+  async function createWorkspace(name) {
     try {
-      setLoading(true);
       const response = await fetch("http://localhost:3001/api/workspaces", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          userId: user.id, // استفاده از ID کاربر فعلی برای ایجاد workspace
+        }),
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to create workspace: ${response.statusText}`);
-      }
 
       const data = await response.json();
 
-      // Update workspaces list and set as current
-      setWorkspaces([...workspaces, data.workspace]);
-      setCurrentWorkspace(data.workspace);
-      setDefaultSwaggerFile(null); // New workspace has no default file
-      setError(null);
-
-      return data.workspace;
+      if (data.success) {
+        // به‌روزرسانی لیست workspace‌ها
+        setWorkspaces([...workspaces, data.workspace]);
+        setCurrentWorkspace(data.workspace);
+      } else {
+        throw new Error(data.message || "Failed to create workspace");
+      }
     } catch (err) {
       console.error("Error creating workspace:", err);
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  };
+  }
 
   // Switch to a different workspace
   const switchWorkspace = (workspaceId) => {
@@ -255,6 +291,7 @@ export function WorkspaceProvider({ children }) {
         checkDefaultSwaggerFile,
         setWorkspaceDefaultSwagger,
         joinWorkspaceByShareCode,
+        isAuthReady,
       }}
     >
       {children}
