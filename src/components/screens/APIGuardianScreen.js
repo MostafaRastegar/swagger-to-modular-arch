@@ -95,8 +95,8 @@ const APIGuardianScreen = () => {
 
       console.log("Comparing specs with options:", compareOptions);
       const result = await compareSpecs(oldSpec, newSpec, compareOptions);
-
-      setReport(report);
+      console.log("result :>> ", result);
+      setReport(result);
       // Check if we used the default file
       if (result.usedDefaultFile) {
         setUsedDefaultFile(true);
@@ -125,7 +125,7 @@ const APIGuardianScreen = () => {
     setError(null);
     setUsedDefaultFile(false);
   };
-
+  console.log("report :>> ", report);
   return (
     <div className="space-y-6">
       {/* File Upload Section */}
