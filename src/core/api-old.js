@@ -1,0 +1,1510 @@
+// core/api.js
+const { v4: uuidv4 } = require("uuid");
+const express = require("express");
+const cors = require("cors");
+const multer = require("multer");
+const archiver = require("archiver");
+const fs = require("fs");
+const path = require("path");
+const { generateModules } = require("./module-generator");
+const cron = require("node-cron");
+const APIGuardian = require("./gardian/api-guardian");
+const generateRoutes = require("./server/generateRoutes");
+const generateDb = require("./server/generateDb");
+const {
+  parseSwaggerFile,
+  extractUniqueTags,
+} = require("./parsers/swaggerParser");
+
+const app = express();
+const port = process.env.PORT || 3001;
+
+// تنظیم کراس اوریجین
+app.use(cors());
+app.use(express.json());
+
+cron.schedule("0 0 * * *", () => {
+  console.log("Running scheduled workspace cleanup...");
+  const results = cleanupOldWorkspaces(30); // Delete workspaces older than 30 days
+  console.log(`Cleaned up ${results.totalDeleted} old workspaces`);
+  console.log(`Encountered ${results.totalErrors} errors during cleanup`);
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Get workspace ID from request
+    const workspaceId = req.query.workspaceId;
+
+    if (!workspaceId) {
+      // If not in query params, use a temporary directory
+      console.warn(
+        "Warning: No workspace ID provided in query for file upload"
+      );
+
+      // You have two options here:
+      // 1. Create a temporary directory
+      const tempUploadPath = path.join(process.cwd(), "uploads", "temp");
+      if (!fs.existsSync(tempUploadPath)) {
+        fs.mkdirSync(tempUploadPath, { recursive: true });
+      }
+      return cb(null, tempUploadPath);
+
+      // 2. Or return an error if workspace is strictly required
+      // return cb(new Error("Workspace ID is required in query parameters"));
+    }
+
+    const uploadPath = getWorkspaceUploadPath(workspaceId);
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+// تنظیم ذخیره‌سازی فایل‌های آپلود شده
+const upload = multer({ storage });
+
+app.post(
+  "/api/guardian/compare-specs",
+  upload.fields([
+    { name: "oldSpec", maxCount: 1 },
+    { name: "newSpec", maxCount: 1 },
+  ]),
+  (req, res) => {
+    try {
+      // Check for workspace ID
+      const workspaceId = req.query.workspaceId;
+      if (!workspaceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Workspace ID is required",
+        });
+      }
+
+      // Validate workspace exists
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      // Determine file paths based on uploads and default settings
+      let oldSpecFile, newSpecFile;
+      let usedDefaultFile = false;
+
+      // Check if we should use the default file
+      const useDefaultForOld = req.body.useDefaultForOld === "true";
+      const useDefaultForNew = req.body.useDefaultForNew === "true";
+
+      if (req.files["oldSpec"] && req.files["oldSpec"][0]) {
+        // User uploaded an old spec file
+        oldSpecFile = req.files["oldSpec"][0].path;
+      } else if (
+        useDefaultForOld &&
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // Use default file for old spec
+        oldSpecFile = workspace.defaultSwaggerFile.path;
+        usedDefaultFile = true;
+        console.log("Using default file for old spec:", oldSpecFile);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Old specification file is required",
+        });
+      }
+
+      if (req.files["newSpec"] && req.files["newSpec"][0]) {
+        // User uploaded a new spec file
+        newSpecFile = req.files["newSpec"][0].path;
+      } else if (
+        useDefaultForNew &&
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // Use default file for new spec
+        newSpecFile = workspace.defaultSwaggerFile.path;
+        usedDefaultFile = true;
+        console.log("Using default file for new spec:", newSpecFile);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "New specification file is required",
+        });
+      }
+
+      const reportLevel = req.body.reportLevel || "all";
+      const outputFormat = req.body.outputFormat || "json";
+
+      const guardian = new APIGuardian({ reportLevel, outputFormat });
+      const report = guardian.compareSpecs(oldSpecFile, newSpecFile);
+
+      // Save report in workspace
+      const workspaceReportsDir = path.join(
+        getWorkspaceOutputPath(workspaceId),
+        "reports"
+      );
+      if (!fs.existsSync(workspaceReportsDir)) {
+        fs.mkdirSync(workspaceReportsDir, { recursive: true });
+      }
+
+      const reportFilename = `api-guardian-report-${Date.now()}.json`;
+      const reportPath = path.join(workspaceReportsDir, reportFilename);
+      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+
+      // Add report file path and workspace info to response
+      report.reportPath = path.relative(process.cwd(), reportPath);
+      report.workspaceId = workspaceId;
+      report.usedDefaultFile = usedDefaultFile;
+
+      res.json({ report });
+    } catch (error) {
+      console.error("Error in compare-specs:", error);
+      res.status(500).json({
+        error: "Failed to compare specifications",
+        details: error.message,
+      });
+    }
+  }
+);
+
+// Update the spec validation endpoint
+app.post(
+  "/api/guardian/validate-spec",
+  upload.single("specFile"),
+  (req, res) => {
+    try {
+      // Check for workspace ID
+      const workspaceId = req.query.workspaceId;
+      if (!workspaceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Workspace ID is required",
+        });
+      }
+
+      // Validate workspace exists
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      const specFile = req.file.path;
+
+      // Validate the file
+      const swagger = parseSwaggerFile(specFile);
+
+      res.json({
+        valid: true,
+        endpoints: extractUniqueTags(swagger).length,
+        message: "Specification file is valid",
+        workspaceId: workspaceId,
+      });
+    } catch (error) {
+      console.error("Error validating spec:", error);
+      res.status(400).json({
+        valid: false,
+        error: "Invalid specification file",
+        details: error.message,
+      });
+    }
+  }
+);
+
+// In src/core/api.js - replace the files endpoint
+
+app.get("/api/files/:outputPath(*)", (req, res) => {
+  try {
+    const outputPath = req.params.outputPath;
+    const workspaceId = req.query.workspaceId;
+
+    console.log("File request - Path:", outputPath);
+    console.log("File request - Workspace:", workspaceId);
+
+    // If workspace ID is provided, validate and map the path
+    let fullPath;
+    let relativePath;
+
+    if (workspaceId) {
+      // Validate workspace
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      // Map the path to the workspace directory
+      const workspacePath = path.join(WORKSPACES_DIR, `ws-${workspaceId}`);
+
+      // Determine if this is an absolute or relative path
+      if (outputPath.includes(`workspaces/ws-${workspaceId}`)) {
+        // This is already a workspace path, use it directly
+        fullPath = path.resolve(outputPath);
+        relativePath = outputPath;
+      } else if (outputPath.startsWith("/")) {
+        // This is an absolute path to something else, which is a security risk
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Cannot access paths outside of workspace",
+        });
+      } else {
+        // This is a relative path within the workspace's output directory
+        fullPath = path.join(workspacePath, "output", outputPath);
+        relativePath = path.relative(process.cwd(), fullPath);
+      }
+
+      // Additional security check - ensure path is within the workspace
+      if (!fullPath.startsWith(workspacePath)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Path is outside workspace boundary",
+        });
+      }
+    } else {
+      // No workspace provided, use path directly (for backward compatibility)
+      // This branch should be removed in production when all components use workspaces
+      console.warn("WARNING: Accessing files without a workspace ID");
+      fullPath = path.resolve(outputPath);
+      relativePath = outputPath;
+    }
+
+    console.log("Resolved path:", fullPath);
+    console.log("Relative path:", relativePath);
+
+    // Ensure path exists
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Path not found",
+        details: {
+          requestedPath: outputPath,
+          resolvedPath: fullPath,
+          workspace: workspaceId,
+        },
+      });
+    }
+
+    const stats = fs.statSync(fullPath);
+
+    if (stats.isFile()) {
+      // If it's a file, return its content
+      const content = fs.readFileSync(fullPath, "utf8");
+      const extension = path.extname(fullPath).substring(1);
+
+      return res.json({
+        success: true,
+        type: "file",
+        name: path.basename(fullPath),
+        extension,
+        content,
+        size: stats.size,
+        modified: stats.mtime,
+        path: relativePath,
+        workspaceId: workspaceId,
+      });
+    }
+
+    if (stats.isDirectory()) {
+      // If it's a directory, return its contents
+      const items = fs.readdirSync(fullPath).map((item) => {
+        const itemPath = path.join(fullPath, item);
+        const itemStats = fs.statSync(itemPath);
+        const isDirectory = itemStats.isDirectory();
+        const itemRelativePath = path
+          .relative(process.cwd(), itemPath)
+          .replace(/\\/g, "/");
+
+        return {
+          name: item,
+          path: itemRelativePath,
+          type: isDirectory ? "directory" : "file",
+          extension: isDirectory ? null : path.extname(item).substring(1),
+          size: itemStats.size,
+          modified: itemStats.mtime,
+          workspaceId: workspaceId,
+        };
+      });
+
+      // Sort: directories first, then files
+      items.sort((a, b) => {
+        if (a.type === b.type) {
+          return a.name.localeCompare(b.name);
+        }
+        return a.type === "directory" ? -1 : 1;
+      });
+
+      return res.json({
+        success: true,
+        type: "directory",
+        name: path.basename(fullPath),
+        path: relativePath,
+        items,
+        workspaceId: workspaceId,
+      });
+    }
+
+    res.status(400).json({
+      success: false,
+      message: "Unsupported file type",
+    });
+  } catch (error) {
+    console.error("Error exploring files:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to explore files",
+    });
+  }
+});
+
+// Update the file download endpoint
+app.get("/api/download/:outputPath(*)", (req, res) => {
+  try {
+    const outputPath = req.params.outputPath;
+    const workspaceId = req.query.workspaceId;
+
+    console.log("Download request - Path:", outputPath);
+    console.log("Download request - Workspace:", workspaceId);
+
+    // Determine the actual path based on workspace
+    let fullPath;
+    let archiveName;
+
+    if (workspaceId) {
+      // Validate workspace
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      // Map the path to the workspace directory
+      const workspacePath = path.join(WORKSPACES_DIR, `ws-${workspaceId}`);
+
+      // Determine if this is an absolute or relative path
+      if (outputPath.includes(`workspaces/ws-${workspaceId}`)) {
+        // This is already a workspace path, use it directly
+        fullPath = path.resolve(outputPath);
+      } else if (outputPath.startsWith("/")) {
+        // This is an absolute path to something else, which is a security risk
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Cannot access paths outside of workspace",
+        });
+      } else {
+        // This is a relative path within the workspace's output directory
+        fullPath = path.join(workspacePath, "output", outputPath);
+      }
+
+      // Additional security check - ensure path is within the workspace
+      if (!fullPath.startsWith(workspacePath)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Path is outside workspace boundary",
+        });
+      }
+
+      // Set archive name based on workspace and path
+      archiveName = `ws-${workspaceId}-${path.basename(outputPath)}`;
+    } else {
+      // No workspace provided, use path directly (for backward compatibility)
+      // This branch should be removed in production when all components use workspaces
+      console.warn("WARNING: Downloading files without a workspace ID");
+      fullPath = path.resolve(outputPath);
+      archiveName = path.basename(outputPath);
+    }
+
+    console.log("Resolved path for download:", fullPath);
+
+    // Ensure path exists
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Path not found for download",
+        details: {
+          requestedPath: outputPath,
+          resolvedPath: fullPath,
+          workspace: workspaceId,
+        },
+      });
+    }
+
+    // Set headers for file download
+    res.attachment(`${archiveName}.zip`);
+    res.setHeader("Content-Type", "application/zip");
+
+    // Create zip archive
+    const archive = archiver("zip", {
+      zlib: { level: 9 }, // Maximum compression level
+    });
+
+    // Set up output stream
+    archive.pipe(res);
+
+    // Add directory contents to the archive
+    archive.directory(fullPath, false);
+
+    // Finalize the archive
+    archive.finalize();
+  } catch (error) {
+    console.error("Error creating ZIP file:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create ZIP file",
+    });
+  }
+});
+// Replace the existing code generation endpoint with this workspace-aware version
+// In src/core/api.js - replace the generate-code endpoint
+
+// Modify the code generation endpoint in src/core/api.js
+app.post("/api/generate-code", upload.single("swaggerFile"), (req, res) => {
+  try {
+    console.log("Received file:", req.file);
+    console.log("Received options:", req.body);
+    console.log("Use default file:", req.body.useDefaultFile);
+
+    // Get and validate workspace ID
+    const workspaceId = req.query.workspaceId;
+    if (!workspaceId) {
+      return res.status(400).json({
+        success: false,
+        message: "Workspace ID is required in URL query parameters",
+      });
+    }
+
+    // Validate workspace exists
+    const workspace = getWorkspace(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    // Determine which Swagger file to use
+    let swaggerFilePath;
+    let useDefaultFile = false;
+
+    if (req.file) {
+      // User uploaded a file, use it
+      swaggerFilePath = req.file.path;
+    } else if (
+      req.body.useDefaultFile === "true" &&
+      workspace.defaultSwaggerFile &&
+      fs.existsSync(workspace.defaultSwaggerFile.path)
+    ) {
+      // No file uploaded, but asked to use default file
+      swaggerFilePath = workspace.defaultSwaggerFile.path;
+      useDefaultFile = true;
+      console.log("Using default Swagger file:", swaggerFilePath);
+    } else {
+      // No file uploaded and no default file available or not requested
+      return res.status(400).json({
+        success: false,
+        message: "No Swagger file uploaded and no default file available",
+      });
+    }
+
+    // Get workspace-specific output directory
+    const workspaceOutputDir = getWorkspaceOutputPath(workspaceId);
+
+    // Combine with user-specified subdirectory if provided
+    const outputDir = req.body.outputDir
+      ? path.join(workspaceOutputDir, req.body.outputDir)
+      : workspaceOutputDir;
+
+    const createFolders = req.body.createFolders === "true";
+    const folderStructure = req.body.folderStructure || "modules";
+
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Generate code
+    generateModules(swaggerFilePath, {
+      outputDir,
+      createFolders,
+      folderStructure,
+    });
+
+    // Return relative path for client use
+    const relativePath = path.relative(process.cwd(), outputDir);
+
+    res.json({
+      success: true,
+      message: "Code generated successfully",
+      outputPath: relativePath,
+      workspaceId: workspaceId,
+      fileInfo: req.file ? req.file : workspace.defaultSwaggerFile,
+      usedDefaultFile: useDefaultFile,
+    });
+  } catch (error) {
+    console.error("Error in generate-code endpoint:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to generate code",
+    });
+  }
+});
+
+// Add to the API server file (src/core/api.js)
+// Documentation endpoint for workspaces
+app.get("/api/docs/workspaces", (req, res) => {
+  res.json({
+    description: "API endpoints for workspace management",
+    endpoints: [
+      {
+        path: "/api/workspaces",
+        method: "GET",
+        description: "Get all workspaces",
+        parameters: [],
+      },
+      {
+        path: "/api/workspaces",
+        method: "POST",
+        description: "Create a new workspace",
+        parameters: [
+          {
+            name: "name",
+            type: "string",
+            required: true,
+            description: "The name of the workspace",
+          },
+        ],
+      },
+      {
+        path: "/api/workspaces/:id",
+        method: "GET",
+        description: "Get a specific workspace by ID",
+        parameters: [
+          {
+            name: "id",
+            type: "string",
+            required: true,
+            description: "The ID of the workspace",
+          },
+        ],
+      },
+      {
+        path: "/api/files/:outputPath",
+        method: "GET",
+        description: "Get file or directory information and content",
+        parameters: [
+          {
+            name: "outputPath",
+            type: "string",
+            required: true,
+            description: "The path to the file or directory",
+          },
+          {
+            name: "workspaceId",
+            type: "string",
+            required: false,
+            description: "The ID of the workspace (optional)",
+          },
+        ],
+      },
+      {
+        path: "/api/download/:outputPath",
+        method: "GET",
+        description: "Download a directory as a ZIP file",
+        parameters: [
+          {
+            name: "outputPath",
+            type: "string",
+            required: true,
+            description: "The path to the directory",
+          },
+          {
+            name: "workspaceId",
+            type: "string",
+            required: false,
+            description: "The ID of the workspace (optional)",
+          },
+        ],
+      },
+    ],
+  });
+});
+
+// In src/core/api.js - update the generate-mock-server endpoint
+app.post(
+  "/api/generate-mock-server",
+  upload.single("swaggerFile"),
+  (req, res) => {
+    try {
+      console.log("Generating mock server...");
+      console.log("Mock server options:", req.body);
+
+      // Get and validate workspace ID
+      const workspaceId = req.query.workspaceId;
+      if (!workspaceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Workspace ID is required",
+        });
+      }
+
+      // Validate workspace exists
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      // Determine which Swagger file to use
+      let swaggerFilePath;
+      let useDefaultFile = false;
+
+      if (req.file) {
+        // User uploaded a file, use it
+        swaggerFilePath = req.file.path;
+        console.log("Using uploaded Swagger file:", swaggerFilePath);
+      } else if (
+        workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+      ) {
+        // No file uploaded, but workspace has a default file
+        swaggerFilePath = workspace.defaultSwaggerFile.path;
+        useDefaultFile = true;
+        console.log("Using default Swagger file:", swaggerFilePath);
+      } else {
+        // No file uploaded and no default file available
+        return res.status(400).json({
+          success: false,
+          message:
+            "No Swagger file uploaded and no default file available for this workspace",
+        });
+      }
+
+      // Get workspace-specific server directory
+      const workspaceServerDir = path.join(
+        getWorkspaceOutputPath(workspaceId),
+        "server"
+      );
+
+      // Ensure the server directory exists
+      if (!fs.existsSync(workspaceServerDir)) {
+        fs.mkdirSync(workspaceServerDir, { recursive: true });
+      }
+
+      // Mock server generation logic (modified to use workspace path)
+      const generateWorkspaceMockServer = async (
+        swaggerFilePath,
+        outputDir
+      ) => {
+        try {
+          console.log("Generating mock server from:", swaggerFilePath);
+          console.log("Output directory:", outputDir);
+
+          // Read and parse swagger file
+          const swaggerContent = fs.readFileSync(swaggerFilePath, "utf8");
+          const swagger = JSON.parse(swaggerContent);
+
+          // Create routes.json and db.json
+          const routes = generateRoutes(swagger.paths);
+          const db = generateDb(swagger);
+
+          // Save files to workspace directory
+          fs.writeFileSync(
+            path.join(outputDir, "routes.json"),
+            JSON.stringify(routes, null, 2)
+          );
+          fs.writeFileSync(
+            path.join(outputDir, "db.json"),
+            JSON.stringify(db, null, 2)
+          );
+
+          // Create README.md for the workspace
+          const apiTitle = swagger.info?.title || "API";
+          const readme = `# Mock Server for ${apiTitle}
+
+## How to Use
+
+1. Install json-server: \`npm install -g json-server\`
+2. Run the server: \`json-server --watch ${outputDir}/db.json --routes ${outputDir}/routes.json --port 3004\`
+3. Access the API at \`http://localhost:3004\`
+
+## Notes
+- This mock server is for development and testing purposes only
+- Data resets to initial state with each restart
+- Workspace ID: ${workspaceId}
+`;
+
+          fs.writeFileSync(path.join(outputDir, "README.md"), readme);
+
+          // Extract some sample endpoints for the UI
+          const sampleEndpoints = [];
+          const routeKeys = Object.keys(routes).slice(0, 5);
+          routeKeys.forEach((route) => {
+            let method = "GET";
+            // Try to infer method from route path
+            if (route.includes("POST")) method = "POST";
+            else if (route.includes("PUT")) method = "PUT";
+            else if (route.includes("DELETE")) method = "DELETE";
+
+            sampleEndpoints.push({
+              path: route,
+              method,
+              description: `${method} ${routes[route]}`,
+            });
+          });
+
+          return {
+            success: true,
+            dbPath: path.join(outputDir, "db.json"),
+            routesPath: path.join(outputDir, "routes.json"),
+            endpointCount: Object.keys(routes).length,
+            endpoints: sampleEndpoints,
+            workspaceId: workspaceId,
+          };
+        } catch (error) {
+          console.error("Error processing swagger file:", error);
+          throw error;
+        }
+      };
+
+      // Get mock server settings from request
+      const port = parseInt(req.body.port) || 3004;
+      const enableCors = req.body.enableCors === "true";
+      const generateRandomData = req.body.generateRandomData === "true";
+      const dataEntryCount = parseInt(req.body.dataEntryCount) || 5;
+
+      // Generate the mock server in the workspace
+      generateWorkspaceMockServer(swaggerFilePath, workspaceServerDir)
+        .then((result) => {
+          // Return relative paths for client use
+          const relativeDbPath = path.relative(process.cwd(), result.dbPath);
+          const relativeRoutesPath = path.relative(
+            process.cwd(),
+            result.routesPath
+          );
+
+          // Build the command with the specified port and CORS option
+          const port = parseInt(req.body.port) || 3004;
+          let command = `npx json-server --watch ${relativeDbPath} --routes ${relativeRoutesPath} --port ${port}`;
+
+          res.json({
+            success: true,
+            message: "Mock server generated successfully",
+            dbPath: relativeDbPath,
+            routesPath: relativeRoutesPath,
+            endpointCount: result.endpointCount,
+            workspaceId: workspaceId,
+            port,
+            command,
+            endpoints: result.endpoints,
+            usedDefaultFile: useDefaultFile,
+          });
+        })
+        .catch((error) => {
+          console.error("Error generating mock server:", error);
+          res.status(500).json({
+            success: false,
+            message: error.message || "Failed to generate mock server",
+          });
+        });
+    } catch (error) {
+      console.error("Error generating mock server:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to generate mock server",
+      });
+    }
+  }
+);
+
+// API for checking if mock server is running
+app.get("/api/mock-server/status", (req, res) => {
+  try {
+    // Simple ping to check if json-server is running
+    fetch("http://localhost:3004/")
+      .then((response) => {
+        if (response.ok) {
+          res.json({
+            running: true,
+            port: 3004,
+            message: "Mock server is running",
+          });
+        } else {
+          res.json({
+            running: false,
+            message: "Mock server is not responding properly",
+          });
+        }
+      })
+      .catch(() => {
+        res.json({
+          running: false,
+          message: "Mock server is not running",
+        });
+      });
+  } catch (error) {
+    res.json({
+      running: false,
+      message: "Error checking mock server status",
+    });
+  }
+});
+
+/**
+ * Cleans up old workspaces
+ * @param {number} olderThanDays - Delete workspaces older than this many days
+ * @returns {object} Cleanup results
+ */
+function cleanupOldWorkspaces(olderThanDays = 30) {
+  const results = {
+    deleted: [],
+    errors: [],
+    totalDeleted: 0,
+    totalErrors: 0,
+  };
+
+  if (!fs.existsSync(WORKSPACES_DIR)) {
+    return results;
+  }
+
+  const now = Date.now();
+  const timeThreshold = now - olderThanDays * 24 * 60 * 60 * 1000;
+
+  const entries = fs.readdirSync(WORKSPACES_DIR);
+
+  for (const entry of entries) {
+    const workspacePath = path.join(WORKSPACES_DIR, entry);
+    const metadataPath = path.join(workspacePath, "workspace.json");
+
+    if (
+      fs.statSync(workspacePath).isDirectory() &&
+      fs.existsSync(metadataPath)
+    ) {
+      try {
+        const workspace = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+        const createdDate = new Date(workspace.created).getTime();
+
+        // Check if workspace is older than the threshold
+        if (createdDate < timeThreshold) {
+          // Delete the workspace directory
+          fs.rmSync(workspacePath, { recursive: true, force: true });
+          results.deleted.push(workspace.id);
+          results.totalDeleted++;
+        }
+      } catch (error) {
+        console.error(`Error cleaning up workspace ${entry}:`, error);
+        results.errors.push(entry);
+        results.totalErrors++;
+      }
+    }
+  }
+
+  return results;
+}
+
+// Add an admin endpoint for cleanup
+app.post("/api/admin/cleanup-workspaces", (req, res) => {
+  try {
+    const { olderThanDays, adminToken } = req.body;
+
+    // Very basic authentication
+    if (adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const daysToKeep = parseInt(olderThanDays, 10) || 30;
+    const results = cleanupOldWorkspaces(daysToKeep);
+
+    res.json({
+      success: true,
+      message: `Cleaned up ${results.totalDeleted} old workspaces`,
+      results,
+    });
+  } catch (error) {
+    console.error("Error cleaning up workspaces:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to clean up workspaces",
+    });
+  }
+});
+
+// Add these workspace-related functions
+const WORKSPACES_DIR = path.join(process.cwd(), "workspaces");
+
+// Ensure workspaces directory exists
+if (!fs.existsSync(WORKSPACES_DIR)) {
+  fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
+}
+
+/**
+ * Creates a new workspace
+ * @param {string} name - Workspace name
+ * @returns {object} Workspace information
+ */
+function createWorkspace(name, userId) {
+  const id = uuidv4();
+  const shareCode = generateUniqueShareCode();
+  const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
+
+  fs.mkdirSync(workspacePath, { recursive: true });
+  fs.mkdirSync(path.join(workspacePath, "output"), { recursive: true });
+  fs.mkdirSync(path.join(workspacePath, "uploads"), { recursive: true });
+
+  const workspace = {
+    id,
+    name,
+    shareCode,
+    creatorId: userId, // اضافه کردن creatorId
+    members: [
+      {
+        userId: userId, // اضافه کردن userId
+        role: "owner",
+        status: "active",
+        joinedAt: new Date().toISOString(),
+      },
+    ],
+    created: new Date().toISOString(),
+    defaultSwaggerFile: null,
+  };
+
+  const metadataPath = path.join(workspacePath, "workspace.json");
+  fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
+  return workspace;
+}
+
+function generateUniqueShareCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+app.post("/api/workspaces/join", (req, res) => {
+  try {
+    const { shareCode, userId } = req.body;
+
+    // پیدا کردن workspace با shareCode
+    const workspace = getAllWorkspaces().find(
+      (ws) => ws.shareCode === shareCode
+    );
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid workspace share code",
+      });
+    }
+
+    // بررسی اینکه آیا کاربر قبلاً عضو workspace است
+    const existingMember = workspace.members.find(
+      (member) => member.userId === userId
+    );
+
+    if (existingMember) {
+      return res.status(200).json({
+        success: true,
+        workspace,
+        message: "Already a member of this workspace",
+      });
+    }
+
+    // اضافه کردن کاربر جدید
+    workspace.members.push({
+      userId,
+      role: "member", // نقش پیش‌فرض
+      status: "active",
+      joinedAt: new Date().toISOString(),
+    });
+
+    // بروزرسانی فایل متادیتا
+    const metadataPath = path.join(
+      WORKSPACES_DIR,
+      `ws-${workspace.id}`,
+      "workspace.json"
+    );
+    fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
+    res.json({
+      success: true,
+      workspace,
+      message: "Successfully joined workspace",
+    });
+  } catch (error) {
+    console.error("Error joining workspace:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to join workspace",
+    });
+  }
+});
+
+/**
+ * Gets a workspace by ID
+ * @param {string} id - Workspace ID
+ * @returns {object|null} Workspace information or null if not found
+ */
+function getWorkspace(id) {
+  const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
+  const metadataPath = path.join(workspacePath, "workspace.json");
+
+  if (!fs.existsSync(metadataPath)) {
+    return null;
+  }
+
+  return JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+}
+
+/**
+ * Gets all workspaces
+ * @returns {array} Array of workspace objects
+ */
+function getAllWorkspaces() {
+  const workspaces = [];
+
+  if (!fs.existsSync(WORKSPACES_DIR)) {
+    return workspaces;
+  }
+
+  const entries = fs.readdirSync(WORKSPACES_DIR);
+
+  for (const entry of entries) {
+    const workspacePath = path.join(WORKSPACES_DIR, entry);
+    const metadataPath = path.join(workspacePath, "workspace.json");
+
+    if (
+      fs.statSync(workspacePath).isDirectory() &&
+      fs.existsSync(metadataPath)
+    ) {
+      try {
+        const workspace = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+        workspaces.push(workspace);
+      } catch (error) {
+        console.error(`Error reading workspace metadata for ${entry}:`, error);
+      }
+    }
+  }
+
+  return workspaces;
+}
+
+/**
+ * Gets the workspace upload path
+ * @param {string} workspaceId - Workspace ID
+ * @returns {string} Path to the workspace uploads directory
+ */
+function getWorkspaceUploadPath(workspaceId) {
+  return path.join(WORKSPACES_DIR, `ws-${workspaceId}`, "uploads");
+}
+
+/**
+ * Gets the workspace output path
+ * @param {string} workspaceId - Workspace ID
+ * @returns {string} Path to the workspace output directory
+ */
+function getWorkspaceOutputPath(workspaceId) {
+  return path.join(WORKSPACES_DIR, `ws-${workspaceId}`, "output");
+}
+
+// Create a new workspace
+app.post("/api/workspaces", (req, res) => {
+  try {
+    const { name, userId } = req.body;
+
+    if (!name || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and userId are required",
+      });
+    }
+
+    const id = uuidv4();
+    const shareCode = generateUniqueShareCode();
+    const workspacePath = path.join(WORKSPACES_DIR, `ws-${id}`);
+
+    fs.mkdirSync(workspacePath, { recursive: true });
+    fs.mkdirSync(path.join(workspacePath, "output"), { recursive: true });
+    fs.mkdirSync(path.join(workspacePath, "uploads"), { recursive: true });
+
+    const workspace = {
+      id,
+      name,
+      shareCode,
+      creatorId: userId, // اضافه کردن creatorId
+      members: [
+        {
+          userId: userId, // اضافه کردن userId به members
+          role: "owner",
+          status: "active",
+          joinedAt: new Date().toISOString(),
+        },
+      ],
+      created: new Date().toISOString(),
+      defaultSwaggerFile: null,
+    };
+
+    const metadataPath = path.join(workspacePath, "workspace.json");
+    fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
+    res.json({
+      success: true,
+      workspace,
+    });
+  } catch (error) {
+    console.error("Error creating workspace:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create workspace",
+    });
+  }
+});
+
+// Get all workspaces
+app.get("/api/workspaces", (req, res) => {
+  try {
+    const userId = req.query.userId;
+    console.log("Requested User ID:", userId);
+
+    // لاگ تمام workspace ها
+    const allWorkspaces = getAllWorkspaces();
+    console.log("All Workspaces:", JSON.stringify(allWorkspaces, null, 2));
+
+    const accessibleWorkspaces = allWorkspaces.filter((workspace) => {
+      console.log("Checking Workspace:", workspace.id);
+      console.log("Creator ID:", workspace.creatorId);
+      console.log("Members:", workspace.members);
+
+      const isAccessible =
+        workspace.creatorId === userId ||
+        workspace.members.some(
+          (member) => member.userId === userId && member.status === "active"
+        );
+
+      console.log("Is Accessible:", isAccessible);
+      return isAccessible;
+    });
+
+    console.log(
+      "Accessible Workspaces:",
+      JSON.stringify(accessibleWorkspaces, null, 2)
+    );
+
+    res.json({
+      success: true,
+      workspaces: accessibleWorkspaces,
+    });
+  } catch (error) {
+    console.error("Error fetching workspaces:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch workspaces",
+    });
+  }
+});
+
+// Get a specific workspace
+app.get("/api/workspaces/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    // Calculate workspace size
+    const sizeInBytes = getWorkspaceSize(id);
+    const sizeInMB = Math.round((sizeInBytes / (1024 * 1024)) * 100) / 100;
+
+    // Include size in the response
+    const workspaceWithSize = {
+      ...workspace,
+      size: {
+        bytes: sizeInBytes,
+        MB: sizeInMB,
+      },
+    };
+
+    res.json({
+      success: true,
+      workspace: workspaceWithSize,
+    });
+  } catch (error) {
+    console.error("Error getting workspace:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get workspace",
+    });
+  }
+});
+
+// Add to src/core/api.js
+
+// Set a Swagger file as the default for a workspace
+app.post(
+  "/api/workspaces/:id/default-swagger",
+  upload.single("swaggerFile"),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const workspace = getWorkspace(id);
+
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No swagger file uploaded",
+        });
+      }
+
+      // Validate Swagger file (similar to validateSpecFile)
+      try {
+        const swagger = parseSwaggerFile(req.file.path);
+
+        // If successful, update the workspace with default file info
+        workspace.defaultSwaggerFile = {
+          path: req.file.path,
+          name: req.file.originalname,
+          uploadedAt: new Date().toISOString(),
+          endpoints: extractUniqueTags(swagger).length,
+        };
+
+        // Save updated workspace metadata
+        const metadataPath = path.join(
+          WORKSPACES_DIR,
+          `ws-${id}`,
+          "workspace.json"
+        );
+        fs.writeFileSync(metadataPath, JSON.stringify(workspace, null, 2));
+
+        res.json({
+          success: true,
+          message: "Default Swagger file set successfully",
+          fileInfo: workspace.defaultSwaggerFile,
+        });
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Swagger specification file",
+          details: error.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error setting default Swagger file:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to set default Swagger file",
+      });
+    }
+  }
+);
+
+// Get default Swagger file info for a workspace
+app.get("/api/workspaces/:id/default-swagger", (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    if (!workspace.defaultSwaggerFile) {
+      return res.status(404).json({
+        success: false,
+        message: "No default Swagger file set for this workspace",
+      });
+    }
+
+    res.json({
+      success: true,
+      defaultSwaggerFile: workspace.defaultSwaggerFile,
+    });
+  } catch (error) {
+    console.error("Error getting default Swagger file:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get default Swagger file",
+    });
+  }
+});
+
+// Check if default Swagger file exists for a workspace
+app.get("/api/workspaces/:id/has-default-swagger", (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    const hasDefaultSwagger = Boolean(
+      workspace.defaultSwaggerFile &&
+        fs.existsSync(workspace.defaultSwaggerFile.path)
+    );
+
+    res.json({
+      success: true,
+      hasDefaultSwagger,
+      defaultSwaggerFile: hasDefaultSwagger
+        ? workspace.defaultSwaggerFile
+        : null,
+    });
+  } catch (error) {
+    console.error("Error checking default Swagger file:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to check default Swagger file",
+    });
+  }
+});
+
+// Add to src/core/api.js
+const validateWorkspace = (req, res, next) => {
+  const workspaceId =
+    req.body.workspaceId || req.query.workspaceId || req.params.workspaceId;
+
+  if (!workspaceId) {
+    return res.status(400).json({
+      success: false,
+      message: "Workspace ID is required",
+    });
+  }
+
+  const workspace = getWorkspace(workspaceId);
+  if (!workspace) {
+    return res.status(404).json({
+      success: false,
+      message: "Workspace not found",
+    });
+  }
+
+  // Add workspace to request object for use in route handlers
+  req.workspace = workspace;
+  next();
+};
+
+// Use the middleware for relevant routes
+app.get("/api/workspaces/:id", validateWorkspace, (req, res) => {
+  // Now req.workspace is available
+  res.json({
+    success: true,
+    workspace: req.workspace,
+  });
+});
+
+function getWorkspaceSize(workspaceId) {
+  const workspacePath = path.join(WORKSPACES_DIR, `ws-${workspaceId}`);
+
+  if (!fs.existsSync(workspacePath)) {
+    return 0;
+  }
+
+  // Recursive function to calculate directory size
+  const calculateSize = (dirPath) => {
+    let size = 0;
+    const items = fs.readdirSync(dirPath);
+
+    for (const item of items) {
+      const itemPath = path.join(dirPath, item);
+      const stats = fs.statSync(itemPath);
+
+      if (stats.isDirectory()) {
+        size += calculateSize(itemPath);
+      } else {
+        size += stats.size;
+      }
+    }
+
+    return size;
+  };
+
+  return calculateSize(workspacePath);
+}
+
+// افزودن مسیری برای آزمودن وضعیت API
+app.get("/api/status", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "API is running",
+  });
+});
+
+app.listen(port, () => {
+  console.log(`API server running on port ${port}`);
+  console.log(`Test API status: http://localhost:${port}/api/status`);
+});
+
+// Add this helper function to src/core/api.js
+/**
+ * Creates a workspace-aware multer middleware
+ * @param {string} fieldName - The field name for the file upload
+ * @returns {Function} Multer middleware configured for workspace uploads
+ */
+function createWorkspaceUploadMiddleware(fieldName) {
+  const workspaceStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      // Get workspace ID from URL query
+      const workspaceId = req.query.workspaceId;
+
+      if (!workspaceId) {
+        return cb(
+          new Error(`Workspace ID is required in query for ${fieldName} upload`)
+        );
+      }
+
+      // Validate workspace exists
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) {
+        return cb(new Error(`Workspace not found: ${workspaceId}`));
+      }
+
+      const uploadPath = getWorkspaceUploadPath(workspaceId);
+
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + "-" + file.originalname);
+    },
+  });
+
+  return multer({ storage: workspaceStorage }).single(fieldName);
+}
