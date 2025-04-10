@@ -1,57 +1,15 @@
-function generateDb(swagger) {
-  const db = {};
-  const routes = extractRoutes(swagger);
+/**
+ * Mock Data Generator
+ *
+ * Utility functions for generating mock data based on schema definitions
+ */
 
-  routes.forEach((route) => {
-    const resourceName = extractResourceName(route);
-    const responseSchema = findResponseSchema(swagger, route);
-
-    if (responseSchema) {
-      db[resourceName] = generateDataFromSchema(responseSchema, 1);
-    }
-  });
-
-  return db;
-}
-
-function extractRoutes(swagger) {
-  const routes = [];
-
-  for (const [path, methods] of Object.entries(swagger.paths)) {
-    for (const [method, details] of Object.entries(methods)) {
-      routes.push({ path, method, details });
-    }
-  }
-
-  return routes;
-}
-
-function extractResourceName(route) {
-  // Convert path to resource name by removing numbers and parameters
-  const pathSegments = route.path
-    .replace(/\{[^}]+\}/g, "") // Remove parameters
-    .split("/")
-    .filter(Boolean);
-
-  return pathSegments.map((segment) => segment.replace(/-/g, "_")).join("_");
-}
-
-function findResponseSchema(swagger, route) {
-  const responses = route.details.responses;
-
-  // Priority given to 200 or 201 responses
-  const successCodes = ["200", "201"];
-
-  for (const code of successCodes) {
-    if (responses[code] && responses[code].content) {
-      const contentType = Object.keys(responses[code].content)[0];
-      return responses[code].content[contentType].schema;
-    }
-  }
-
-  return null;
-}
-
+/**
+ * Generate data from schema
+ * @param {Object} schema - Schema object from Swagger
+ * @param {number} count - Number of items to generate
+ * @returns {Array|Object} Generated data
+ */
 function generateDataFromSchema(schema, count) {
   // For arrays or array-type items
   if (schema.type === "array") {
@@ -70,6 +28,12 @@ function generateDataFromSchema(schema, count) {
   return generateArrayData(schema, count);
 }
 
+/**
+ * Generate array of items
+ * @param {Object} schema - Schema object
+ * @param {number} count - Number of items to generate
+ * @returns {Array} Array of generated items
+ */
 function generateArrayData(schema, count) {
   const items = [];
 
@@ -80,6 +44,12 @@ function generateArrayData(schema, count) {
   return items;
 }
 
+/**
+ * Generate a single item
+ * @param {Object} schema - Schema object
+ * @param {number} index - Index for consistent ID generation
+ * @returns {Object} Generated item
+ */
 function generateItem(schema, index) {
   const item = { id: index };
 
@@ -97,6 +67,13 @@ function generateItem(schema, index) {
   return item;
 }
 
+/**
+ * Generate property value based on property type
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {any} Generated property value
+ */
 function generatePropertyValue(propName, propSchema, index) {
   const type = propSchema.type;
 
@@ -124,16 +101,37 @@ function generatePropertyValue(propName, propSchema, index) {
   }
 }
 
+/**
+ * Generate integer property value
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {number} Generated integer
+ */
 function generateIntegerValue(propName, propSchema, index) {
   const min = propSchema.minimum || 0;
   const max = propSchema.maximum || 1000;
   return min + Math.floor(Math.random() * (max - min)) + index;
 }
 
+/**
+ * Generate number property value
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {number} Generated number
+ */
 function generateNumberValue(propName, propSchema, index) {
   return parseFloat((Math.random() * 100 + index).toFixed(2));
 }
 
+/**
+ * Generate string property value
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {string} Generated string
+ */
 function generateStringValue(propName, propSchema, index) {
   // Priority given to enum
   if (propSchema.enum) {
@@ -166,6 +164,13 @@ function generateStringValue(propName, propSchema, index) {
   }
 }
 
+/**
+ * Generate array property value
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {Array} Generated array
+ */
 function generateArrayPropertyValue(propName, propSchema, index) {
   const items = [];
   const itemCount = Math.min(3, Math.floor(Math.random() * 3) + 1);
@@ -179,6 +184,13 @@ function generateArrayPropertyValue(propName, propSchema, index) {
   return items;
 }
 
+/**
+ * Generate object property value
+ * @param {string} propName - Property name
+ * @param {Object} propSchema - Property schema
+ * @param {number} index - Index for consistent value generation
+ * @returns {Object} Generated object
+ */
 function generateObjectPropertyValue(propName, propSchema, index) {
   const obj = {};
 
@@ -191,4 +203,14 @@ function generateObjectPropertyValue(propName, propSchema, index) {
   return obj;
 }
 
-module.exports = generateDb;
+module.exports = {
+  generateDataFromSchema,
+  generateArrayData,
+  generateItem,
+  generatePropertyValue,
+  generateIntegerValue,
+  generateNumberValue,
+  generateStringValue,
+  generateArrayPropertyValue,
+  generateObjectPropertyValue,
+};

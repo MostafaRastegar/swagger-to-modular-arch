@@ -1,7 +1,7 @@
 /**
- * Schema Parser
+ * Schema Parser Module
  *
- * Utilities for parsing and processing Swagger/OpenAPI schemas
+ * Provides utilities for parsing and handling schema definitions in Swagger/OpenAPI specifications.
  */
 
 /**
@@ -14,11 +14,6 @@ function extractAllSchemas(swagger) {
 
   if (swagger.components && swagger.components.schemas) {
     Object.entries(swagger.components.schemas).forEach(([name, schema]) => {
-      schemaMap.set(name, schema);
-    });
-  } else if (swagger.definitions) {
-    // Support for OpenAPI 2.0 (Swagger)
-    Object.entries(swagger.definitions).forEach(([name, schema]) => {
       schemaMap.set(name, schema);
     });
   }
@@ -36,7 +31,7 @@ function collectSchemasFromSchema(schema, neededSchemas) {
 
   // Reference case
   if (schema.$ref) {
-    const refName = extractRefName(schema.$ref);
+    const refName = schema.$ref.split("/").pop();
     neededSchemas.add(refName);
     return;
   }
@@ -59,15 +54,6 @@ function collectSchemasFromSchema(schema, neededSchemas) {
   if (schema.additionalProperties) {
     collectSchemasFromSchema(schema.additionalProperties, neededSchemas);
   }
-}
-
-/**
- * Extract reference name from a $ref
- * @param {string} ref - Reference string (e.g. "#/components/schemas/User")
- * @returns {string} Reference name (e.g. "User")
- */
-function extractRefName(ref) {
-  return ref.split("/").pop();
 }
 
 /**
@@ -132,7 +118,7 @@ function getTypeFromSchema(schema, allSchemas) {
 
   // Handle $ref
   if (schema.$ref) {
-    return extractRefName(schema.$ref);
+    return schema.$ref.split("/").pop();
   }
 
   // Handle arrays
@@ -218,5 +204,4 @@ module.exports = {
   collectSchemasFromSchema,
   getTypeFromSchema,
   checkForPagination,
-  extractRefName,
 };

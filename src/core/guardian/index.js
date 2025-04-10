@@ -8,7 +8,7 @@ const path = require("path");
 const detector = require("./detector");
 const markdownReporter = require("./reporters/markdown");
 const jsonReporter = require("./reporters/json");
-const { parseSwaggerFile } = require("../parsers/swaggerParser");
+const { parseSwaggerFile } = require("../code-generator/parsers");
 
 /**
  * API Guardian class for detecting breaking changes between API specifications

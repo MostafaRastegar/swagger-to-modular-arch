@@ -1,5 +1,9 @@
-// generators/presentationSectionGenerator.js
-const { pascalCase, camelCase } = require("../utils/stringUtils");
+/**
+ * Presentation Generator Module
+ *
+ * Generates React Query hooks for API operations based on Swagger/OpenAPI specifications.
+ */
+const { pascalCase, camelCase } = require("../../utils/stringUtils");
 
 /**
  * Generate the presentation section with React Query hooks

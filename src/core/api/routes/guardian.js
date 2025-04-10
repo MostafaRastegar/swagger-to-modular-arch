@@ -10,7 +10,7 @@ const APIGuardian = require("../../guardian");
 const {
   parseSwaggerFile,
   extractUniqueTags,
-} = require("../../parsers/swaggerParser");
+} = require("../../code-generator/parsers/swagger");
 
 // Configure upload middleware for multiple files
 const guardianUpload = createUploadMiddleware().fields([

@@ -1,5 +1,9 @@
-// Service generation utilities
-const { pascalCase } = require("../utils/stringUtils");
+/**
+ * Service Generator Module
+ *
+ * Generates TypeScript service implementations based on Swagger/OpenAPI specifications.
+ */
+const { pascalCase } = require("../../utils/stringUtils");
 
 /**
  * Generate service implementation

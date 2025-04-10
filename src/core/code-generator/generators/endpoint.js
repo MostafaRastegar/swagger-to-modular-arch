@@ -1,10 +1,8 @@
 /**
- * Endpoint Generator
+ * Endpoint Generator Module
  *
- * Generate endpoint constants and functions
+ * Generates TypeScript code for API endpoints based on Swagger/OpenAPI specification.
  */
-
-const { pascalCase } = require("../utils/string");
 
 /**
  * Generate the endpoints section for a tag

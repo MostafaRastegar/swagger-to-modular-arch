@@ -8,7 +8,7 @@ const { createFieldUploadMiddleware } = require("../middleware/upload");
 const {
   parseSwaggerFile,
   extractUniqueTags,
-} = require("../../parsers/swaggerParser");
+} = require("../../code-generator/parsers/swagger");
 
 // Get all workspaces
 router.get("/", (req, res) => {

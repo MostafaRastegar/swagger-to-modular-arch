@@ -1,12 +1,12 @@
 // src/core/api/routes/code-generator.js
 const express = require("express");
 const router = express.Router();
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 const { validateWorkspace } = require("../middleware/validation");
 const { createFieldUploadMiddleware } = require("../middleware/upload");
 const workspaceService = require("../services/workspace");
-const { generateModules } = require("../../module-generator");
+const { generateModules } = require("../../code-generator");
 const { DEFAULT_FOLDER_STRUCTURE } = require("../config");
 
 // Upload middleware for swagger file

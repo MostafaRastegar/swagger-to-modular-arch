@@ -1,9 +1,8 @@
 // src/core/api/services/mockServer.js
 const fs = require("fs");
 const path = require("path");
-const { getWorkspaceOutputPath } = require("./workspace");
-const generateRoutes = require("../../server/generateRoutes");
-const generateDb = require("../../server/generateDb");
+// const { getWorkspaceOutputPath } = require("./workspace");
+const { generateRoutes, generateDatabase } = require("../../server/generators");
 
 /**
  * Generate a mock server from Swagger specification
@@ -27,7 +26,7 @@ async function generateMockServer(swaggerFilePath, outputDir) {
 
     // Create routes.json and db.json
     const routes = generateRoutes(swagger.paths);
-    const db = generateDb(swagger);
+    const db = generateDatabase(swagger);
 
     // Save files
     fs.writeFileSync(

@@ -1,19 +1,18 @@
 /**
- * Tag Processor
+ * Tag Processor Module
  *
- * Process tags for code generation
+ * Processes each tag from a Swagger/OpenAPI specification and generates
+ * appropriate TypeScript code.
  */
-
 const path = require("path");
-const { writeToFile } = require("../utils/file");
+const { writeToFile } = require("../../utils/fileUtils");
 const { collectTagOperations } = require("../parsers/swagger");
 const { generateEndpointsSection } = require("../generators/endpoint");
 const { generateInterfacesSection } = require("../generators/interface");
 const { generateServiceSection } = require("../generators/service");
 const { generatePresentationSection } = require("../generators/presentation");
-const { pascalCase } = require("../utils/string");
+const { pascalCase } = require("../../utils/stringUtils");
 const { generateDistributedFiles } = require("../generators/distributed");
-const config = require("../config");
 
 /**
  * Process a single tag
@@ -22,39 +21,23 @@ const config = require("../config");
  * @param {string} outputDir - Output directory
  * @param {Map} allSchemas - Map of all schemas
  * @param {Object} options - Additional options
- * @returns {Object} Processing result
  */
 function processTag(tag, swagger, outputDir, allSchemas, options = {}) {
   console.log(`Processing tag: ${tag}...`);
 
-  const result = {
-    tag,
-    filesGenerated: 0,
-    operations: 0,
-  };
-
   try {
     // Collect operations
     const operations = collectTagOperations(tag, swagger);
-    result.operations = operations.length;
 
     if (operations.length === 0) {
       console.warn(`No operations found for tag: ${tag}`);
-      return result;
+      return;
     }
 
     // Check if we should use distributed files
     if (options.createFolders) {
       // Generate distributed files
-      const distributedResult = generateDistributedFiles(
-        tag,
-        operations,
-        swagger,
-        allSchemas,
-        outputDir
-      );
-
-      result.filesGenerated = distributedResult.filesGenerated;
+      generateDistributedFiles(tag, operations, swagger, allSchemas, outputDir);
     } else {
       // Generate unified file
       const fileContent = generateFileContent(
@@ -65,15 +48,11 @@ function processTag(tag, swagger, outputDir, allSchemas, options = {}) {
       );
 
       // Write unified file
-      const outputPath = config.buildOutputPath(outputDir, tag);
+      const outputPath = path.join(outputDir, `${tag}.ts`);
       writeToFile(outputPath, fileContent);
-      result.filesGenerated = 1;
     }
-
-    return result;
   } catch (error) {
     console.error(`Error processing tag ${tag}:`, error);
-    throw error;
   }
 }
 

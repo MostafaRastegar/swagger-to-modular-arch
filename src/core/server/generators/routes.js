@@ -1,4 +1,14 @@
-// Generate routes.json from swagger paths
+/**
+ * Routes Generator
+ *
+ * Generates routes.json for json-server based on Swagger paths
+ */
+
+/**
+ * Extract resource name from a path
+ * @param {string} path - API path
+ * @returns {string} Resource name
+ */
 function extractResourceName(path) {
   // Convert path to resource name by removing numbers and parameters
   const pathSegments = path
@@ -9,6 +19,11 @@ function extractResourceName(path) {
   return pathSegments.map((segment) => segment.replace(/-/g, "_")).join("_");
 }
 
+/**
+ * Generate routes for json-server
+ * @param {Object} paths - Swagger paths object
+ * @returns {Object} Routes object for json-server
+ */
 function generateRoutes(paths) {
   const routes = {};
 
@@ -39,4 +54,7 @@ function generateRoutes(paths) {
   return routes;
 }
 
-module.exports = generateRoutes;
+module.exports = {
+  generateRoutes,
+  extractResourceName,
+};

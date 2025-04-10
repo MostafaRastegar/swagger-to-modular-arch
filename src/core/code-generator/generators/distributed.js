@@ -1,16 +1,16 @@
 /**
- * Distributed Generator
+ * Distributed Generator Module
  *
- * Generate distributed files for folder structure
+ * Generates distributed TypeScript files based on Swagger/OpenAPI specifications.
+ * This module generates separate files for models, services, and interfaces.
  */
-
 const fs = require("fs");
 const path = require("path");
 const { generateEndpointsSection } = require("./endpoint");
 const { generateInterfacesSection } = require("./interface");
 const { generateServiceSection } = require("./service");
 const { generatePresentationSection } = require("./presentation");
-const { pascalCase } = require("../utils/string");
+const { pascalCase } = require("../../utils/stringUtils");
 
 /**
  * Generate distributed files for each tag according to folder structure
@@ -19,7 +19,6 @@ const { pascalCase } = require("../utils/string");
  * @param {Object} swagger - Swagger object
  * @param {Map} allSchemas - Map of all schemas
  * @param {string} outputDir - Base output directory
- * @returns {Object} Result with information about generated files
  */
 function generateDistributedFiles(
   tag,
@@ -29,11 +28,6 @@ function generateDistributedFiles(
   outputDir
 ) {
   console.log(`Generating distributed files for ${tag}...`);
-
-  const result = {
-    tag,
-    filesGenerated: 0,
-  };
 
   try {
     // Generate all sections
@@ -67,7 +61,6 @@ function generateDistributedFiles(
     const modelsContent = generateModelsFile(interfacesSection, capitalizedTag);
     fs.writeFileSync(modelsFile, modelsContent, "utf8");
     console.log(`Generated models file: ${modelsFile}`);
-    result.filesGenerated++;
 
     // 2. Generate service interface file
     const serviceInterfaceFile = path.join(
@@ -80,7 +73,6 @@ function generateDistributedFiles(
     );
     fs.writeFileSync(serviceInterfaceFile, serviceInterfaceContent, "utf8");
     console.log(`Generated service interface file: ${serviceInterfaceFile}`);
-    result.filesGenerated++;
 
     // 3. Generate service implementation file
     const serviceImplFile = path.join(entityDir, `${originalTag}.service.ts`);
@@ -93,7 +85,6 @@ function generateDistributedFiles(
     );
     fs.writeFileSync(serviceImplFile, serviceImplContent, "utf8");
     console.log(`Generated service implementation file: ${serviceImplFile}`);
-    result.filesGenerated++;
 
     // 4. Generate presentation file
     const presentationFile = path.join(
@@ -108,16 +99,12 @@ function generateDistributedFiles(
     );
     fs.writeFileSync(presentationFile, presentationContent, "utf8");
     console.log(`Generated presentation file: ${presentationFile}`);
-    result.filesGenerated++;
 
     console.log(
       `Distributed file generation for ${tag} completed successfully!`
     );
-
-    return result;
   } catch (error) {
     console.error(`Error generating distributed files for ${tag}:`, error);
-    throw error;
   }
 }
 

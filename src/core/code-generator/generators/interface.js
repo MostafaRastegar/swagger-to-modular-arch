@@ -1,10 +1,14 @@
-// Interface generation utilities
-const { pascalCase, camelCase } = require("../utils/stringUtils");
+/**
+ * Interface Generator Module
+ *
+ * Generates TypeScript interfaces based on Swagger/OpenAPI specifications.
+ */
+const { pascalCase, camelCase } = require("../../utils/stringUtils");
 const {
   getTypeFromSchema,
   checkForPagination,
   collectNeededSchemas,
-} = require("../parsers/schemaParser");
+} = require("../parsers/schema");
 
 /**
  * Generate the interfaces section
