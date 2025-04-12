@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d47a1"/>
+      <stop offset="100%" stop-color="#2196f3"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="300" rx="15" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative elements - code pattern -->
+  <g opacity="0.2" fill="#ffffff">
+    <text x="50" y="50" font-family="monospace" font-size="12">interface UserService {</text>
+    <text x="70" y="70" font-family="monospace" font-size="12">  getUsers(): Promise&lt;User[]&gt;;</text>
+    <text x="70" y="90" font-family="monospace" font-size="12">  getUserById(id: string): Promise&lt;User&gt;;</text>
+    <text x="70" y="110" font-family="monospace" font-size="12">  createUser(user: UserDTO): Promise&lt;User&gt;;</text>
+    
+    
+    <text x="750" y="90" font-family="monospace" font-size="12">"paths": {</text>
+    <text x="770" y="110" font-family="monospace" font-size="12">"/users": {</text>
+    <text x="790" y="130" font-family="monospace" font-size="12">"get": {</text>
+    <text x="810" y="150" font-family="monospace" font-size="12">"tags": ["Users"],</text>
+    <text x="740" y="170" font-family="monospace" font-size="12">}</text>
+    
+  </g>
+  
+  <!-- Main Icon Elements -->
+  <g transform="translate(370, 120)">
+    <!-- Swagger Document Icon -->
+    <rect x="-120" y="-80" width="120" height="160" rx="8" fill="#61affe"/>
+    <text x="-110" y="-50" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="#ffffff">Swagger</text>
+    <text x="-110" y="-30" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="#ffffff">OpenAPI</text>
+    
+    <rect x="-100" y="0" width="80" height="10" rx="2" fill="#ffffff" opacity="0.6"/>
+    <rect x="-100" y="20" width="80" height="10" rx="2" fill="#ffffff" opacity="0.6"/>
+    <rect x="-100" y="40" width="60" height="10" rx="2" fill="#ffffff" opacity="0.6"/>
+  </g>
+  
+  <!-- Arrow - FIXED: direction changed to point correctly -->
+  <g transform="translate(570, 130)">
+    <polygon points="0,0 -50,-30 -50,30" fill="#ffffff"/>
+    <rect x="-170" y="-5" width="120" height="10" fill="#ffffff"/>
+  </g>
+  
+  <!-- Modular Architecture Icon -->
+  <g transform="translate(653, 130)">
+    <!-- Feature modules -->
+    <rect x="-70" y="-80" width="60" height="160" rx="5" fill="#bbdefb" stroke="#1e88e5" stroke-width="2"/>
+    <text x="-40" y="-60" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" transform="rotate(-90, -40, -60)">Users</text>
+    <rect x="-70" y="-20" width="60" height="40" rx="3" fill="#64b5f6"/>
+    <rect x="-70" y="25" width="60" height="40" rx="3" fill="#42a5f5"/>
+    
+    <rect x="0" y="-80" width="60" height="160" rx="5" fill="#c8e6c9" stroke="#43a047" stroke-width="2"/>
+    <text x="30" y="-60" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" transform="rotate(-90, 30, -60)">Products</text>
+    <rect x="0" y="-20" width="60" height="40" rx="3" fill="#81c784"/>
+    <rect x="0" y="25" width="60" height="40" rx="3" fill="#66bb6a"/>
+  </g>
+  
+  <!-- Title Background for better readability -->
+  <rect x="180" y="230" width="600" height="65" rx="10" fill="#000000" opacity="0.3"/>
+  
+  <!-- Title - FIXED: smaller size and better positioning -->
+  <text x="480" y="260" font-family="Arial, sans-serif" font-weight="bold" font-size="26" fill="#ffffff" text-anchor="middle">Swagger to Modular Architecture</text>
+  
+  <!-- Tagline -->
+  <text x="480" y="285" font-family="Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">Feature-first TypeScript code generation from API specs</text>
+</svg>
