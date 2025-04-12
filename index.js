@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Main entry point for the Swagger TypeScript generator
-const { generateModules } = require("./src/module-generator");
+const { generateModules } = require("./src/core/module-generator");
 
 // Process command line arguments
 function parseArgs() {

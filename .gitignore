@@ -1,5 +1,8 @@
 node_modules
-server
-modules
 swagger-orginal.json
 flattened-swagger.json
+modules
+server
+uploads
+!src/core/server
+workspaces
