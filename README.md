@@ -9,7 +9,7 @@ Built with ❤️
 
 A comprehensive toolkit that transforms Swagger/OpenAPI specifications into a modular, layered TypeScript architecture, helping developers build type-safe, maintainable API integrations with minimal effort.
 
-![Swagger to Modular Architecture Screenshot](https://github.com/MostafaRastegar/swagger-to-modular-arch/tree/main/public/banner.png)
+![Swagger to Modular Architecture Screenshot](https://github.com/MostafaRastegar/swagger-to-modular-arch/blob/main/public/banner.png?raw=true)
 
 ## Important Requirements
 
@@ -247,7 +247,7 @@ src/
 
 ### Architecture Principles
 
-![Modular Architecture Diagram](https://github.com/MostafaRastegar/swagger-to-modular-arch/tree/main/public/diagram.png)
+![Modular Architecture Diagram](https://github.com/MostafaRastegar/swagger-to-modular-arch/blob/main/public/diagram.png?raw=true)
 
 This architecture can be described as **"Feature-Oriented Modular Architecture with Lightweight Layer Separation"** and follows these principles:
 
