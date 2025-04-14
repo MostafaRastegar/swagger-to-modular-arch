@@ -10,7 +10,7 @@ import {
 // Default settings structure
 const defaultSettings = {
   general: {
-    defaultOutputDir: "src/modules",
+    defaultOutputDir: "modules",
     showWelcomeScreen: true,
     autoSaveSettings: true,
     confirmBeforeGeneration: true,
@@ -29,7 +29,7 @@ const defaultSettings = {
   },
   mockServer: {
     defaultPort: 3004,
-    enableCors: true,
+    enableCors: false,
     generateRandomData: true,
     dataEntryCount: 5,
   },

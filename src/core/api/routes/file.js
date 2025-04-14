@@ -12,9 +12,11 @@ router.get("/:outputPath(*)", (req, res) => {
   try {
     const outputPath = req.params.outputPath;
     const workspaceId = req.query.workspaceId;
+    const allowDownload = req.query.download;
 
     console.log("File request - Path:", outputPath);
     console.log("File request - Workspace:", workspaceId);
+    console.log("File request - Download:", allowDownload);
 
     try {
       // Resolve the path
@@ -23,14 +25,22 @@ router.get("/:outputPath(*)", (req, res) => {
         workspaceId
       );
 
-      // Get file/directory info
-      const fileInfo = fileService.getFileInfo(
-        fullPath,
-        relativePath,
-        workspaceId
-      );
-
-      res.json(fileInfo);
+      if (allowDownload) {
+        // Set archive name based on workspace and path
+        return downloadModules({
+          outputPath,
+          workspaceId,
+          res,
+        });
+      } else {
+        // Get file/directory info
+        const fileInfo = fileService.getFileInfo(
+          fullPath,
+          relativePath,
+          workspaceId
+        );
+        res.json(fileInfo);
+      }
     } catch (error) {
       const statusCode = error.message.includes("Access denied") ? 403 : 404;
       return res.status(statusCode).json({
@@ -51,44 +61,29 @@ router.get("/:outputPath(*)", (req, res) => {
   }
 });
 
-/**
- * Download a directory as a ZIP file
- * The path parameter is captured using wildcard (*)
- */
-router.get("/download/:outputPath(*)", (req, res) => {
+function downloadModules({ outputPath, workspaceId, res }) {
   try {
-    const outputPath = req.params.outputPath;
-    const workspaceId = req.query.workspaceId;
+    // Resolve the path
+    const { fullPath } = fileService.resolveFilePath(outputPath, workspaceId);
 
-    try {
-      // Resolve the path
-      const { fullPath } = fileService.resolveFilePath(outputPath, workspaceId);
+    // Set archive name based on workspace and path
+    const archiveName = workspaceId
+      ? `ws-${workspaceId}-${path.basename(outputPath)}`
+      : path.basename(outputPath);
 
-      // Set archive name based on workspace and path
-      const archiveName = workspaceId
-        ? `ws-${workspaceId}-${path.basename(outputPath)}`
-        : path.basename(outputPath);
-
-      // Create and send zip archive
-      fileService.createZipArchive(fullPath, res, archiveName);
-    } catch (error) {
-      const statusCode = error.message.includes("Access denied") ? 403 : 404;
-      return res.status(statusCode).json({
-        success: false,
-        message: error.message,
-        details: {
-          requestedPath: outputPath,
-          workspace: workspaceId,
-        },
-      });
-    }
+    // Create and send zip archive
+    fileService.createZipArchive(fullPath, res, archiveName);
   } catch (error) {
-    console.error("Error creating ZIP file:", error);
-    res.status(500).json({
+    const statusCode = error.message.includes("Access denied") ? 403 : 404;
+    return res.status(statusCode).json({
       success: false,
-      message: error.message || "Failed to create ZIP file",
+      message: error.message,
+      details: {
+        requestedPath: outputPath,
+        workspace: workspaceId,
+      },
     });
   }
-});
+}
 
 module.exports = router;

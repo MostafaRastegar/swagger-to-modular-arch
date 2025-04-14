@@ -8,7 +8,7 @@ const path = require("path");
 
 module.exports = {
   // Default output directories
-  DEFAULT_OUTPUT_DIR: "src/modules",
+  DEFAULT_OUTPUT_DIR: "modules",
 
   // Default templates and structures
   DEFAULT_FOLDER_STRUCTURE: "modules",

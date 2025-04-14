@@ -80,9 +80,9 @@ router.post("/", uploadSwaggerFile, validateWorkspace, (req, res) => {
         let command = `npx json-server --watch ${relativeDbPath} --routes ${relativeRoutesPath} --port ${port}`;
 
         // Add the CORS option if enabled
-        if (enableCors) {
-          command += " --middlewares cors";
-        }
+        // if (enableCors) {
+        //   command += " --middlewares cors";
+        // }
 
         // Create README
         const swaggerContent = fs.readFileSync(swaggerFilePath, "utf8");
