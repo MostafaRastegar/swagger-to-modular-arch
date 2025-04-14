@@ -19,7 +19,7 @@ const { processTag } = require("./processors");
  * @param {boolean} options.createFolders - Whether to create folder structure
  */
 function generateModules(swaggerFilePath, options = {}) {
-  const outputDir = options.outputDir || "src/modules";
+  const outputDir = options.outputDir || "modules";
   const createFolders = options.createFolders || false;
   const folderStructure = options.folderStructure || "modules";
 

@@ -90,7 +90,7 @@ function createZipArchive(dirPath, res, archiveName) {
 
   // Create zip archive
   const archive = archiver("zip", {
-    zlib: { level: 9 }, // Maximum compression level
+    zlib: { level: 6 }, // Maximum compression level
   });
 
   // Set up error handler

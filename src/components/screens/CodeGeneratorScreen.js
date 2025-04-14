@@ -33,6 +33,8 @@ const CodeGeneratorScreen = () => {
   const [error, setError] = useState(null);
   const [apiStatus, setApiStatus] = useState(null);
   const [usedDefaultFile, setUsedDefaultFile] = useState(false);
+  const [defaultOutputPath, setDefaultOutputPath] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { settings } = useSettings();
   const [options, setOptions] = useState({
     outputDir: settings.general.defaultOutputDir || "src/generated",
@@ -91,6 +93,9 @@ const CodeGeneratorScreen = () => {
       setGenerationResult(result);
       setGenerationComplete(true);
       setUsedDefaultFile(result.usedDefaultFile);
+
+      // Trigger file explorer refresh after successful generation
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error generating code:", error);
       setError(error.message || "Failed to generate code");
@@ -98,12 +103,19 @@ const CodeGeneratorScreen = () => {
       setIsGenerating(false);
     }
   };
+
+  // Set default workspace path when workspace changes
   useEffect(() => {
     if (currentWorkspace) {
       setOptions((prevOptions) => ({
         ...prevOptions,
         workspaceId: currentWorkspace.id,
       }));
+
+      // Set default output path for the current workspace
+      setDefaultOutputPath(`workspaces/ws-${currentWorkspace.id}/output`);
+    } else {
+      setDefaultOutputPath(null);
     }
   }, [currentWorkspace]);
 
@@ -124,6 +136,11 @@ const CodeGeneratorScreen = () => {
 
     checkApiStatus();
   }, []);
+
+  // Get the current active output path
+  const currentOutputPath = generationResult
+    ? generationResult.outputPath
+    : defaultOutputPath;
 
   return (
     <div className="space-y-6">
@@ -261,34 +278,38 @@ const CodeGeneratorScreen = () => {
           {isGenerating ? "Generating..." : "Generate Code"}
         </Button>
       </div>
-      {/* Results Section - only show when generation is complete */}
-      {generationComplete && generationResult && (
+
+      {/* Files Section - Always show if we have a workspace */}
+      {currentWorkspace && currentOutputPath && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-medium mb-4 flex items-center">
             <FolderTree size={20} className="mr-2 text-blue-600" />
-            Generated Files
+            {generationComplete ? "Generated Files" : "Workspace Files"}
           </h3>
 
-          <div className="bg-gray-100 p-4 rounded-lg mb-4">
-            <p className="text-green-600 font-medium flex items-center">
-              <Check size={20} className="mr-2" />
-              Code generation completed successfully!
-            </p>
-            <p className="text-gray-600 mt-2">
-              Files were generated at:{" "}
-              <code className="bg-gray-200 px-2 py-1 rounded">
-                {generationResult.outputPath}
-              </code>
-            </p>
-          </div>
+          {generationComplete && (
+            <div className="bg-gray-100 p-4 rounded-lg mb-4">
+              <p className="text-green-600 font-medium flex items-center">
+                <Check size={20} className="mr-2" />
+                Code generation completed successfully!
+              </p>
+              <p className="text-gray-600 mt-2">
+                Files were generated at:{" "}
+                <code className="bg-gray-200 px-2 py-1 rounded">
+                  {generationResult.outputPath}
+                </code>
+              </p>
+            </div>
+          )}
 
           {/* File Explorer and Viewer */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <div>
               <h4 className="text-md font-medium mb-3">File Explorer</h4>
               <FileExplorer
-                outputPath={generationResult.outputPath}
+                outputPath={currentOutputPath}
                 onFileSelect={setSelectedFile}
+                refreshTrigger={refreshTrigger}
               />
             </div>
 
@@ -307,7 +328,7 @@ const CodeGeneratorScreen = () => {
           {/* Action Button */}
           <div className="flex justify-end mt-6">
             <a
-              href={`http://localhost:3001/api/download/${generationResult.outputPath}`}
+              href={`http://localhost:3001/api/download/${currentOutputPath}?workspaceId=${currentWorkspace.id}&download=true`}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
               download
             >

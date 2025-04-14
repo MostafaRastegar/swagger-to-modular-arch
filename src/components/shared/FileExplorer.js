@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "../../context/WorkspaceContext";
 
-const FileExplorer = ({ outputPath, onFileSelect }) => {
+const FileExplorer = ({ outputPath, onFileSelect, refreshTrigger = 0 }) => {
   const [fileTree, setFileTree] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,12 +81,12 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     }
   };
 
-  // Update useEffect to depend on currentWorkspace
+  // Update useEffect to depend on refreshTrigger
   useEffect(() => {
     if (outputPath) {
       fetchRootDirectory();
     }
-  }, [outputPath, currentWorkspace]); // Re-fetch when workspace changes
+  }, [outputPath, currentWorkspace, refreshTrigger]); // Re-fetch when workspace changes or refreshTrigger changes
 
   const handleToggleFolder = async (folderPath) => {
     // Check if folder is currently expanded
@@ -102,6 +102,11 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     if (!isCurrentlyExpanded && !folderContents[folderPath]) {
       await fetchFolderContents(folderPath);
     }
+  };
+
+  // Manual refresh function
+  const refreshFiles = () => {
+    fetchRootDirectory();
   };
 
   // Update handleFileClick to include workspace ID
@@ -130,7 +135,6 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     }
   };
 
-  // رندر یک آیتم در درخت فایل (فایل یا پوشه)
   const renderItem = (item, level = 0) => {
     const isExpanded = expandedFolders[item.path];
     const padding = level * 16;
@@ -158,7 +162,6 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
             </div>
           </div>
 
-          {/* فقط وقتی پوشه باز است و محتوای آن وجود دارد، زیرآیتم‌ها را نمایش بده */}
           {isExpanded && folderItems.length > 0 && (
             <div>
               {folderItems.map((childItem) => renderItem(childItem, level + 1))}
@@ -168,7 +171,6 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
       );
     }
 
-    // رندر فایل
     const getFileIcon = (extension) => {
       switch (extension) {
         case "js":
@@ -225,7 +227,7 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     let url = `http://localhost:3001/api/download/${outputPath}`;
 
     if (currentWorkspace) {
-      url += `?workspaceId=${currentWorkspace.id}`;
+      url += `?workspaceId=${currentWorkspace.id}&download=true`;
     }
 
     return url;
@@ -235,14 +237,23 @@ const FileExplorer = ({ outputPath, onFileSelect }) => {
     <div className="border rounded-md overflow-hidden bg-white">
       <div className="bg-gray-100 px-4 py-2 flex justify-between items-center border-b">
         <h4 className="font-medium">Files</h4>
-        <a
-          href={getDownloadUrl()}
-          className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
-          download
-        >
-          <Download size={16} className="mr-1" />
-          Download All
-        </a>
+        <div className="flex space-x-2">
+          <button
+            onClick={refreshFiles}
+            className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+          >
+            <RefreshCw size={16} className="mr-1" />
+            Refresh
+          </button>
+          <a
+            href={getDownloadUrl()}
+            className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+            download
+          >
+            <Download size={16} className="mr-1" />
+            Download All
+          </a>
+        </div>
       </div>
       <div className="p-2 max-h-80 overflow-y-auto">
         {fileTree.items && fileTree.items.map((item) => renderItem(item))}

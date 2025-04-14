@@ -7,7 +7,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const options = {
     swaggerFilePath: args[0] || "swagger.json",
-    outputDir: "src/modules",
+    outputDir: "modules",
     createFolders: false,
     folderStructure: "modules",
   };

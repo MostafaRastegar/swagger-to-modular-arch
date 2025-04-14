@@ -13,6 +13,36 @@ const { DEFAULT_FOLDER_STRUCTURE } = require("../config");
 const uploadSwaggerFile = createFieldUploadMiddleware("swaggerFile");
 
 /**
+ * Helper function to recursively delete directory contents
+ * @param {string} dirPath - Directory path to clean
+ * @param {boolean} removeSelf - Whether to remove the directory itself
+ */
+function cleanDirectory(dirPath, removeSelf = false) {
+  if (!fs.existsSync(dirPath)) return;
+
+  // Read directory contents
+  const files = fs.readdirSync(dirPath);
+
+  // Delete each file/directory
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+
+    if (fs.statSync(filePath).isDirectory()) {
+      // Recursively clean subdirectories
+      cleanDirectory(filePath, true);
+    } else {
+      // Delete file
+      fs.unlinkSync(filePath);
+    }
+  }
+
+  // Optionally remove the directory itself
+  if (removeSelf) {
+    fs.rmdirSync(dirPath);
+  }
+}
+
+/**
  * Generate TypeScript code from Swagger specification
  */
 router.post("/", uploadSwaggerFile, validateWorkspace, (req, res) => {
@@ -57,11 +87,15 @@ router.post("/", uploadSwaggerFile, validateWorkspace, (req, res) => {
       ? path.join(workspaceOutputDir, req.body.outputDir)
       : workspaceOutputDir;
 
+    // Clean the output directory before generating new code
+    console.log(`Cleaning output directory: ${outputDir}`);
+    cleanDirectory(outputDir);
+
     const createFolders = req.body.createFolders === "true";
     const folderStructure =
       req.body.folderStructure || DEFAULT_FOLDER_STRUCTURE;
 
-    // Ensure output directory exists
+    // Ensure output directory exists (in case it was deleted)
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
