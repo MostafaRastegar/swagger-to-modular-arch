@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+# Don't ignore build directories - we need them for the production image
+# build
+# build-api
+.git
+.github
+.vscode
+.idea
+.DS_Store
+*.md
+!README.md
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log

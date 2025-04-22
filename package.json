@@ -24,9 +24,9 @@
     "start:dashboard": "react-scripts start",
     "start:prod:dashboard": "serve -s build",
     "start": "npm run start:core-api & npm run start:dashboard",
-    "start:prod": "npm run start:prod:core-api & npm run start:prod:dashboard",
+    "start:prod": "npm run start:prod:dashboard & npm run start:prod:core-api",
     "build": "react-scripts build",
-    "build:prod": "npm run build & npm run build:api"
+    "build:prod": "npm run build && npm run build:api"
   },
   "keywords": [
     "swagger",

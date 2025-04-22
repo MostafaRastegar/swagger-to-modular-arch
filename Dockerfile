@@ -1,46 +1,44 @@
-FROM docker.cache.***.ir/node:20 AS deps
+# Build stage
+FROM docker.cache.****.ir/node:20-alpine AS builder
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm config set registry https://npm.cache.***.ir
+RUN npm config set registry https://npm.cache.****.ir
 RUN npm config set strict-ssl false
 
-RUN npm install -f --verbose
+# Copy package files
+COPY package*.json ./
 
+# Install dependencies
+RUN npm install
+
+# Copy source code
 COPY . .
 
-RUN NODE_ENV=production npm run build:prod
+# Build both frontend and backend
+RUN npm run build:prod
 
-FROM docker.cache.***.ir/node:20 AS prod-deps
-WORKDIR /app
+# Verify build directories
+RUN echo "Checking if build directories exist:" && \
+    ls -la && \
+    ls -la build && \
+    ls -la build-api
 
-COPY package*.json ./
+# Create non-root user
+RUN addgroup -g 1001 nodejs && \
+    adduser -D -u 1001 -G nodejs nodeuser
 
-RUN npm config set registry https://npm.cache.***.ir
-RUN npm config set strict-ssl false
-RUN npm install --omit=dev --no-optional -f
+# Install serve for serving the frontend
+RUN npm install -g serve
 
-FROM docker.cache.***.ir/node:20-slim AS runner
-ARG MODE=$MODE
-ENV MODE=$MODE
-ENV NODE_ENV=production
+# Create the workspaces directory and set permissions
+RUN mkdir -p workspaces && \
+    chown -R nodeuser:nodejs /app
 
-WORKDIR /app
+# Switch to non-root user
+USER nodeuser
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-RUN npm install serve
-
-COPY --from=deps /app/build ./build
-COPY --from=deps /app/build-api ./build-api
-COPY --from=deps /app/node_modules ./node_modules
-
-RUN chown -R nextjs:nodejs ./
-
-USER nextjs
-
+# Expose ports for both frontend and backend
 EXPOSE 3000
-ENV PORT 3000
+EXPOSE 3001
 
-CMD ["npm","run", "start:prod"]
+# Start command to run both services
+CMD ["sh", "-c", "node build-api/api.js & serve -s build"]

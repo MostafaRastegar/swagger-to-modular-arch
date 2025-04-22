@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  # Frontend
+      - "3001:3001"  # Backend API
+    volumes:
+      - workspaces:/app/workspaces
+    environment:
+      - NODE_ENV=production
+      # Add any other environment variables your app needs
+
+volumes:
+  workspaces:
+    # Persistent volume for workspace data
