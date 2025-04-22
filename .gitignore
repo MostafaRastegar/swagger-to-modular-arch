@@ -6,3 +6,5 @@ server
 uploads
 !src/core/server
 workspaces
+build
+build-api

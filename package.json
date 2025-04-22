@@ -18,8 +18,15 @@
     "gardian": "node ./src/core/guardian/api-guardian-cli.js swagger.json swagger-2.json --output=report.md",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:core-api": "node ./src/core/api.js",
+    "start:prod:core-api": "node ./build-api/api.js",
+    "dev:core-api": "nodemon ./src/core/api.js",
+    "build:api": "webpack",
     "start:dashboard": "react-scripts start",
-    "start": "npm run start:core-api & npm run start:dashboard"
+    "start:prod:dashboard": "serve -s build",
+    "start": "npm run start:core-api & npm run start:dashboard",
+    "start:prod": "npm run start:prod:core-api & npm run start:prod:dashboard",
+    "build": "react-scripts build",
+    "build:prod": "npm run build & npm run build:api"
   },
   "keywords": [
     "swagger",
@@ -51,9 +58,12 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
+    "nodemon": "^3.1.9",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "webpack": "^5.99.6",
+    "webpack-cli": "^6.0.1"
   },
   "eslintConfig": {
     "extends": [
